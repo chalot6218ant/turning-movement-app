@@ -1,140 +1,118 @@
 import streamlit as st
-import numpy as np
-import pandas as pd
 
-st.set_page_config(page_title="Traffic Analysis Dashboard", layout="wide")
+st.set_page_config(layout="wide", page_title="Traffic Turning Movement Calculator")
 
-# --- Custom CSS for Maximum Readability ---
-st.markdown("""
-    <style>
-    .traffic-card {
-        border: 3px solid #1e3a8a;
-        padding: 20px;
-        border-radius: 12px;
-        background-color: #ffffff;
-        text-align: center;
-        box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 15px;
-    }
-    .leg-name { color: #1e3a8a; font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-    .in-out-row { display: flex; justify-content: space-around; margin-bottom: 15px; background: #f0f7ff; padding: 10px; border-radius: 8px; }
-    .val-in { color: #0284c7; font-size: 26px; font-weight: bold; }
-    .val-out { color: #475569; font-size: 26px; font-weight: bold; }
-    .movement-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 2px solid #eee; pt: 10px; }
-    .m-box { padding: 8px; border: 1px solid #e2e8f0; border-radius: 5px; }
-    .m-label { font-size: 14px; color: #64748b; display: block; }
-    .m-val { font-size: 22px; font-weight: bold; color: #b91c1c; }
-    </style>
-    """, unsafe_allow_html=True)
+# --- ส่วนการปรับแต่งที่ Sidebar ---
+st.sidebar.header("⚙️ Settings")
+title_text = st.sidebar.text_input("หัวข้อแผนภูมิ", "Year 2006 AM")
+unit_text = st.sidebar.text_input("หน่วย", "หน่วย : PCU/Hr.")
 
-# --- Traffic Logic (Fratar Method) ---
-def calc_matrix(inbound, outbound, labels, up, sp):
-    n = len(inbound)
-    seed = np.ones((n, n)) * ((100 - sp - up) / (n - 1))
-    for i in range(n):
-        for j in range(n):
-            if i == j: seed[i,j] = up
-            elif abs(i-j) == 2: seed[i,j] = sp
-    in_v, out_v = np.array(inbound, dtype=float), np.array(outbound, dtype=float)
-    if in_v.sum() > 0: out_v = out_v * (in_v.sum() / out_v.sum())
-    m = seed.copy()
-    for _ in range(50):
-        m = m * (in_v / np.where(m.sum(axis=1)==0, 1, m.sum(axis=1)))[:, np.newaxis]
-        m = m * (out_v / np.where(m.sum(axis=0)==0, 1, m.sum(axis=0)))
-    return pd.DataFrame(m, index=labels, columns=labels)
+st.sidebar.subheader("📍 ชื่อถนน")
+rd_n = st.sidebar.text_input("ถนนทิศเหนือ", "ติวานนท์")
+rd_s = st.sidebar.text_input("ถนนทิศใต้", "ติวานนท์")
+rd_e = st.sidebar.text_input("ถนนทิศตะวันออก", "งามวงศ์วาน")
+rd_w = st.sidebar.text_input("ถนนทิศตะวันตก", "รัตนาธิเบศร์")
 
-# --- Sidebar Inputs ---
-with st.sidebar:
-    st.header("🚦 Input Traffic Data")
-    legs = ["North (N)", "South (S)", "East (E)", "West (W)"]
-    in_v, out_v = [], []
-    for leg in legs:
-        st.subheader(f"Leg: {leg}")
-        c1, c2 = st.columns(2)
-        in_v.append(c1.number_input(f"Inbound", min_value=0, value=1000, key=f"i_{leg}"))
-        out_v.append(c2.number_input(f"Outbound", min_value=0, value=1000, key=f"o_{leg}"))
-    st.divider()
-    u_p = st.slider("U-Turn %", 0, 15, 2)
-    s_p = st.slider("Straight %", 40, 95, 70)
+# --- ส่วนการกรอกข้อมูล ---
+st.subheader("📝 ป้อนข้อมูลปริมาณจราจร")
+col1, col2, col3, col4 = st.columns(4)
 
-# --- Process Data ---
-df = calc_matrix(in_v, out_v, legs, u_p, s_p)
-d = {
-    "N": {"In": in_v[0], "Out": out_v[0], "U": df.iloc[0,0], "T": df.iloc[0,1], "R": df.iloc[0,2], "L": df.iloc[0,3], "Name": "ติวานนท์"},
-    "S": {"In": in_v[1], "Out": out_v[1], "U": df.iloc[1,1], "T": df.iloc[1,0], "R": df.iloc[1,3], "L": df.iloc[1,2], "Name": "แคราย"},
-    "E": {"In": in_v[2], "Out": out_v[2], "U": df.iloc[2,2], "T": df.iloc[2,3], "R": df.iloc[2,0], "L": df.iloc[2,1], "Name": "งามวงศ์วาน"},
-    "W": {"In": in_v[3], "Out": out_v[3], "U": df.iloc[3,3], "T": df.iloc[3,2], "R": df.iloc[3,1], "L": df.iloc[3,0], "Name": "West Leg"},
-}
+with col1:
+    st.markdown(f"**⬇️ จากทิศเหนือ ({rd_n})**")
+    n_l = st.number_input("ซ้าย (L)", value=25, key="nl")
+    n_t = st.number_input("ตรง (T)", value=1190, key="nt")
+    n_r = st.number_input("ขวา (R)", value=2362, key="nr")
+with col2:
+    st.markdown(f"**⬆️ จากทิศใต้ ({rd_s})**")
+    s_l = st.number_input("ซ้าย (L)", value=1693, key="sl")
+    s_t = st.number_input("ตรง (T)", value=481, key="st")
+    s_r = st.number_input("ขวา (R)", value=60, key="sr")
+with col3:
+    st.markdown(f"**⬅️ จากทิศตะวันออก ({rd_e})**")
+    e_l = st.number_input("ซ้าย (L)", value=752, key="el")
+    e_t = st.number_input("ตรง (T)", value=1762, key="et")
+    e_r = st.number_input("ขวา (R)", value=1114, key="er")
+with col4:
+    st.markdown(f"**➡️ จากทิศตะวันตก ({rd_w})**")
+    w_l = st.number_input("ซ้าย (L)", value=516, key="wl")
+    w_t = st.number_input("ตรง (T)", value=3935, key="wt")
+    w_r = st.number_input("ขวา (R)", value=37, key="wr")
 
-st.title("📊 Intersection Movement Analysis Dashboard")
+# --- Logic การคำนวณ ---
+in_n, in_s, in_e, in_w = (n_l+n_t+n_r), (s_l+s_t+s_r), (e_l+e_t+e_r), (w_l+w_t+w_r)
+out_n = s_t + e_r + w_l
+out_s = n_t + w_r + e_l
+out_e = w_t + n_l + s_r
+out_w = e_t + s_l + n_r
 
-# --- Layout: 3 Columns for Clean Organization ---
-top_spacer, center_n, end_spacer = st.columns([1, 2, 1])
-with center_n:
-    # NORTH CARD
-    st.markdown(f"""<div class="traffic-card">
-        <div class="leg-name">{d['N']['Name']} (North)</div>
-        <div class="in-out-row">
-            <div><span style="font-size:14px">IN</span><br><span class="val-in">{d['N']['In']}</span></div>
-            <div><span style="font-size:14px">OUT</span><br><span class="val-out">{d['N']['Out']}</span></div>
-        </div>
-        <div class="movement-grid">
-            <div class="m-box"><span class="m-label">↶ U-Turn</span><span class="m-val">{d['N']['U']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">↓ Straight</span><span class="m-val">{d['N']['T']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">→ Right</span><span class="m-val">{d['N']['R']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">← Left</span><span class="m-val">{d['N']['L']:.0f}</span></div>
-        </div>
-    </div>""", unsafe_allow_html=True)
+# --- แสดงผล Diagram ด้วย CSS ---
+st.divider()
 
-mid_w, mid_icon, mid_e = st.columns([2, 1, 2])
-with mid_w:
-    # WEST CARD
-    st.markdown(f"""<div class="traffic-card">
-        <div class="leg-name">{d['W']['Name']}</div>
-        <div class="in-out-row">
-            <div><span style="font-size:14px">IN</span><br><span class="val-in">{d['W']['In']}</span></div>
-            <div><span style="font-size:14px">OUT</span><br><span class="val-out">{d['W']['Out']}</span></div>
-        </div>
-        <div class="movement-grid">
-            <div class="m-box"><span class="m-label">← Left</span><span class="m-val">{d['W']['L']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">→ Straight</span><span class="m-val">{d['W']['T']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">↓ Right</span><span class="m-val">{d['W']['R']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">↶ U-Turn</span><span class="m-val">{d['W']['U']:.0f}</span></div>
-        </div>
-    </div>""", unsafe_allow_html=True)
+html_code = f"""
+<style>
+    .canvas {{
+        width: 850px;
+        height: 700px;
+        background-color: white;
+        border: 1px solid #999;
+        margin: 0 auto;
+        position: relative;
+        background-image: linear-gradient(#eee 1px, transparent 1px), linear-gradient(90deg, #eee 1px, transparent 1px);
+        background-size: 20px 20px;
+        font-family: sans-serif;
+    }}
+    .title {{ text-align: center; width: 100%; padding-top: 20px; font-size: 18px; }}
+    .val-box {{
+        position: absolute; border: 1px solid black; background: white;
+        text-align: center; font-size: 13px; min-width: 45px; height: 22px; line-height: 22px;
+    }}
+    .road-line-v {{ position: absolute; width: 2px; background: black; }}
+    .road-line-h {{ position: absolute; height: 2px; background: black; }}
+    .arrow-icon {{ position: absolute; font-size: 22px; font-weight: bold; }}
+    .road-label {{ position: absolute; font-size: 12px; font-weight: bold; }}
+</style>
 
-with mid_icon:
-    st.markdown("<div style='text-align:center; padding-top:40px;'><h1 style='font-size:60px;'>✛</h1><p>JUNCTION</p></div>", unsafe_allow_html=True)
+<div class="canvas">
+    <div class="title">{title_text}</div>
 
-with mid_e:
-    # EAST CARD
-    st.markdown(f"""<div class="traffic-card">
-        <div class="leg-name">{d['E']['Name']}</div>
-        <div class="in-out-row">
-            <div><span style="font-size:14px">IN</span><br><span class="val-in">{d['E']['In']}</span></div>
-            <div><span style="font-size:14px">OUT</span><br><span class="val-out">{d['E']['Out']}</span></div>
-        </div>
-        <div class="movement-grid">
-            <div class="m-box"><span class="m-label">→ Right</span><span class="m-val">{d['E']['R']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">← Straight</span><span class="m-val">{d['E']['T']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">↓ Left</span><span class="m-val">{d['E']['L']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">↶ U-Turn</span><span class="m-val">{d['E']['U']:.0f}</span></div>
-        </div>
-    </div>""", unsafe_allow_html=True)
+    <div class="road-line-v" style="left: 340px; top: 100px; height: 160px;"></div>
+    <div class="road-line-v" style="left: 500px; top: 100px; height: 160px;"></div>
+    <div class="road-label" style="left: 410px; top: 220px; transform: rotate(-90deg);">{rd_n}</div>
+    <div class="val-box" style="left: 350px; top: 140px;">{out_n:,}</div>
+    <div class="val-box" style="left: 440px; top: 140px;">{in_n:,}</div>
+    <div class="val-box" style="left: 410px; top: 237px; min-width: 25px;">{n_l}</div>
+    <div class="val-box" style="left: 437px; top: 237px; min-width: 35px;">{n_t}</div>
+    <div class="val-box" style="left: 474px; top: 237px; min-width: 25px;">{n_r}</div>
+    <div class="arrow-icon" style="left: 405px; top: 255px;">↧</div>
+    <div class="arrow-icon" style="left: 443px; top: 255px;">↓</div>
+    <div class="arrow-icon" style="left: 475px; top: 255px;">↴</div>
 
-bot_spacer, center_s, end_spacer_b = st.columns([1, 2, 1])
-with center_s:
-    # SOUTH CARD
-    st.markdown(f"""<div class="traffic-card">
-        <div class="leg-name">{d['S']['Name']} (South)</div>
-        <div class="in-out-row">
-            <div><span style="font-size:14px">IN</span><br><span class="val-in">{d['S']['In']}</span></div>
-            <div><span style="font-size:14px">OUT</span><br><span class="val-out">{d['S']['Out']}</span></div>
-        </div>
-        <div class="movement-grid">
-            <div class="m-box"><span class="m-label">← Left</span><span class="m-val">{d['S']['L']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">↑ Straight</span><span class="m-val">{d['S']['T']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">→ Right</span><span class="m-val">{d['S']['R']:.0f}</span></div>
-            <div class="m-box"><span class="m-label">↶ U-Turn</span><span class="m-val">{d['S']['U']:.0f}</span></div>
-        </div>
-    </div>""", unsafe_allow_html=True)
+    <div class="road-line-v" style="left: 340px; top: 410px; height: 160px;"></div>
+    <div class="road-line-v" style="left: 500px; top: 410px; height: 160px;"></div>
+    <div class="val-box" style="left: 440px; top: 520px;">{out_s:,}</div>
+    <div class="val-box" style="left: 350px; top: 520px;">{in_s:,}</div>
+    <div class="val-box" style="left: 340px; top: 410px; min-width: 25px;">{s_r}</div>
+    <div class="val-box" style="left: 367px; top: 410px; min-width: 35px;">{s_t}</div>
+    <div class="val-box" style="left: 404px; top: 410px; min-width: 25px;">{s_l}</div>
+    <div class="arrow-icon" style="left: 335px; top: 380px;">↰</div>
+    <div class="arrow-icon" style="left: 373px; top: 380px;">↑</div>
+    <div class="arrow-icon" style="left: 405px; top: 380px;">⤴</div>
+
+    <div class="road-line-h" style="left: 500px; top: 260px; width: 250px;"></div>
+    <div class="road-line-h" style="left: 500px; top: 410px; width: 250px;"></div>
+    <div class="road-label" style="left: 600px; top: 340px;">{rd_e}</div>
+    <div class="val-box" style="left: 670px; top: 310px;">{in_e:,}</div>
+    <div class="val-box" style="left: 670px; top: 365px;">{out_e:,}</div>
+    <div class="val-box" style="left: 550px; top: 337px; min-width: 40px;">{e_l}</div>
+    <div class="val-box" style="left: 550px; top: 361px; min-width: 40px;">{e_t}</div>
+    <div class="val-box" style="left: 550px; top: 385px; min-width: 40px;">{e_r}</div>
+    <div class="arrow-icon" style="left: 515px; top: 332px;">↤</div>
+    <div class="arrow-icon" style="left: 515px; top: 357px;">←</div>
+    <div class="arrow-icon" style="left: 515px; top: 382px;">↲</div>
+
+    <div class="road-line-h" style="left: 90px; top: 260px; width: 250px;"></div>
+    <div class="road-line-h" style="left: 90px; top: 410px; width: 250px;"></div>
+    <div class="val-box" style="left: 140px; top: 310px;">{in_w:,}</div>
+    <div class="val-box" style="left: 140px; top: 365px;">{out_w:,}</div>
+    <div class="val-box" style="left: 250px; top: 260px; min-width: 40px;">{w_r}</div>
+    <div class="val-box" style="left: 250px; top: 2
