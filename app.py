@@ -12,7 +12,7 @@ with st.sidebar:
     e_road = st.text_input("ถนนทิศตะวันออก (E)", "ถ.โครงการแนวตะวันออก-ตก")
     w_road = st.text_input("ถนนทิศตะวันตก (W)", "ถ.บางกรวย-ไทรน้อย")
 
-st.subheader("🚗 วิเคราะห์ Turning Movement (Scaled Curved Arrows)")
+st.subheader("🚗 วิเคราะห์ Turning Movement (สไตล์ตามรูปตัวอย่าง)")
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
@@ -49,78 +49,68 @@ res = {
 svg_code = f"""
 <div style="display: flex; justify-content: center;">
 <svg viewBox="0 0 850 750" xmlns="http://www.w3.org/2000/svg" style="background:white; border:1px solid #ccc; width:100%; max-width:850px;">
-    <rect width="850" height="60" fill="#f8f9fa" />
-    <text x="425" y="38" text-anchor="middle" font-size="22" font-weight="bold" font-family="Arial">{title_text}</text>
+    <rect width="850" height="50" fill="#f8f9fa" />
+    <text x="425" y="32" text-anchor="middle" font-size="20" font-weight="bold" font-family="Arial">{title_text}</text>
 
-    <path d="M 350 60 V 280 M 500 60 V 280 M 350 470 V 700 M 500 470 V 700" stroke="black" stroke-width="2.5" fill="none"/>
-    <path d="M 50 280 H 350 M 50 470 H 350 M 500 280 H 800 M 500 470 H 800" stroke="black" stroke-width="2.5" fill="none"/>
+    <path d="M 350 50 V 280 M 500 50 V 280 M 350 470 V 700 M 500 470 V 700" stroke="black" stroke-width="2" fill="none"/>
+    <path d="M 50 280 H 350 M 50 470 H 350 M 500 280 H 800 M 500 470 H 800" stroke="black" stroke-width="2" fill="none"/>
     
-    <line x1="425" y1="60" x2="425" y2="280" stroke="#999" stroke-dasharray="8,5" stroke-width="2"/>
-    <line x1="425" y1="470" x2="425" y2="700" stroke="#999" stroke-dasharray="8,5" stroke-width="2"/>
-    <line x1="50" y1="375" x2="350" y2="375" stroke="#999" stroke-dasharray="8,5" stroke-width="2"/>
-    <line x1="500" y1="375" x2="800" y2="375" stroke="#999" stroke-dasharray="8,5" stroke-width="2"/>
-
-    <text x="445" y="140" transform="rotate(-90 445,140)" font-size="14" font-weight="bold" fill="#2c3e50">{n_road}</text>
-    <text x="445" y="580" transform="rotate(-90 445,580)" font-size="14" font-weight="bold" fill="#2c3e50">{s_road}</text>
-    <text x="620" y="365" font-size="14" font-weight="bold" fill="#2c3e50">{e_road}</text>
-    <text x="120" y="365" font-size="14" font-weight="bold" fill="#2c3e50">{w_road}</text>
+    <line x1="425" y1="50" x2="425" y2="280" stroke="#999" stroke-dasharray="5,5" />
+    <line x1="425" y1="470" x2="425" y2="700" stroke="#999" stroke-dasharray="5,5" />
+    <line x1="50" y1="375" x2="350" y2="375" stroke="#999" stroke-dasharray="5,5" />
+    <line x1="500" y1="375" x2="800" y2="375" stroke="#999" stroke-dasharray="5,5" />
 
     <defs>
-        <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <path d="M0,0 L6,3 L0,6 Z" fill="black" />
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="black" />
         </marker>
     </defs>
 
-    <g font-size="13" font-weight="bold" font-family="Arial">
-        <rect x="430" y="80" width="65" height="28" fill="white" stroke="black" stroke-width="1.5"/><text x="462" y="99" text-anchor="middle">{in_n:,}</text>
-        <rect x="355" y="80" width="65" height="28" fill="white" stroke="black" stroke-width="1.5"/><text x="387" y="99" text-anchor="middle">{out_n:,}</text>
-        <rect x="355" y="640" width="65" height="28" fill="white" stroke="black" stroke-width="1.5"/><text x="387" y="659" text-anchor="middle">{in_s:,}</text>
-        <rect x="430" y="640" width="65" height="28" fill="white" stroke="black" stroke-width="1.5"/><text x="462" y="659" text-anchor="middle">{out_s:,}</text>
+    <g transform="translate(435, 230)">
+        <path d="M 10 -40 Q 10 0 45 0" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <path d="M 32 -40 V 15" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <path d="M 55 -40 Q 55 0 20 0" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <rect x="0" y="-85" width="22" height="45" fill="white" stroke="black"/><text x="11" y="-62" text-anchor="middle" font-size="9" transform="rotate(-90 11,-62)">{res['nl']:,}</text>
+        <rect x="22" y="-85" width="22" height="45" fill="white" stroke="black"/><text x="33" y="-62" text-anchor="middle" font-size="9" transform="rotate(-90 33,-62)">{res['nt']:,}</text>
+        <rect x="44" y="-85" width="22" height="45" fill="white" stroke="black"/><text x="55" y="-62" text-anchor="middle" font-size="9" transform="rotate(-90 55,-62)">{res['nr']:,}</text>
+        <text x="33" y="-100" text-anchor="middle" font-size="12" font-weight="bold">{in_n:,}</text>
     </g>
 
-    <g transform="translate(430, 210)">
-        <path d="M 12 -20 Q 12 35 60 35" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="0" y="0" width="24" height="45" fill="white" stroke="black"/><text x="12" y="28" text-anchor="middle" font-size="10" font-weight="bold" transform="rotate(-90 12,28)">{res['nl']:,}</text>
-        
-        <path d="M 37 -20 V 60" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="25" y="0" width="24" height="45" fill="white" stroke="black"/><text x="37" y="28" text-anchor="middle" font-size="10" font-weight="bold" transform="rotate(-90 37,28)">{res['nt']:,}</text>
-        
-        <path d="M 62 -20 Q 62 35 15 35" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="50" y="0" width="24" height="45" fill="white" stroke="black"/><text x="62" y="28" text-anchor="middle" font-size="10" font-weight="bold" transform="rotate(-90 62,28)">{res['nr']:,}</text>
+    <g transform="translate(355, 410)">
+        <path d="M 10 50 Q 10 10 45 10" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <path d="M 32 50 V -5" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <path d="M 55 50 Q 55 10 20 10" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <rect x="0" y="50" width="22" height="45" fill="white" stroke="black"/><text x="11" y="73" text-anchor="middle" font-size="9" transform="rotate(-90 11,73)">{res['sr']:,}</text>
+        <rect x="22" y="50" width="22" height="45" fill="white" stroke="black"/><text x="33" y="73" text-anchor="middle" font-size="9" transform="rotate(-90 33,73)">{res['st']:,}</text>
+        <rect x="44" y="50" width="22" height="45" fill="white" stroke="black"/><text x="55" y="73" text-anchor="middle" font-size="9" transform="rotate(-90 55,73)">{res['sl']:,}</text>
+        <text x="33" y="110" text-anchor="middle" font-size="12" font-weight="bold">{in_s:,}</text>
     </g>
 
-    <g transform="translate(352, 420)">
-        <path d="M 12 65 Q 12 10 60 10" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="0" y="0" width="24" height="45" fill="white" stroke="black"/><text x="12" y="28" text-anchor="middle" font-size="10" font-weight="bold" transform="rotate(-90 12,28)">{res['sr']:,}</text>
-        
-        <path d="M 37 65 V -15" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="25" y="0" width="24" height="45" fill="white" stroke="black"/><text x="37" y="28" text-anchor="middle" font-size="10" font-weight="bold" transform="rotate(-90 37,28)">{res['st']:,}</text>
-        
-        <path d="M 62 65 Q 62 10 15 10" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="50" y="0" width="24" height="45" fill="white" stroke="black"/><text x="62" y="28" text-anchor="middle" font-size="10" font-weight="bold" transform="rotate(-90 62,28)">{res['sl']:,}</text>
+    <g transform="translate(265, 300)">
+        <path d="M -30 10 Q 10 10 10 45" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <path d="M -30 32 H 15" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <path d="M -30 55 Q 10 55 10 20" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <rect x="-80" y="0" width="50" height="22" fill="white" stroke="black"/><text x="-55" y="15" text-anchor="middle" font-size="10">{res['wl']:,}</text>
+        <rect x="-80" y="22" width="50" height="22" fill="white" stroke="black"/><text x="-55" y="37" text-anchor="middle" font-size="10">{res['wt']:,}</text>
+        <rect x="-80" y="44" width="50" height="22" fill="white" stroke="black"/><text x="-55" y="59" text-anchor="middle" font-size="10">{res['wr']:,}</text>
+        <text x="-100" y="37" text-anchor="middle" font-size="12" font-weight="bold">{in_w:,}</text>
     </g>
 
-    <g transform="translate(260, 290)">
-        <path d="M -15 11 Q 40 11 40 60" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="0" y="0" width="52" height="23" fill="white" stroke="black"/><text x="26" y="16" text-anchor="middle" font-size="11" font-weight="bold">{res['wl']:,}</text>
-        
-        <path d="M -15 34 H 75" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="0" y="23" width="52" height="23" fill="white" stroke="black"/><text x="26" y="39" text-anchor="middle" font-size="11" font-weight="bold">{res['wt']:,}</text>
-        
-        <path d="M -15 57 Q 40 57 40 10" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="0" y="46" width="52" height="23" fill="white" stroke="black"/><text x="26" y="62" text-anchor="middle" font-size="11" font-weight="bold">{res['wr']:,}</text>
+    <g transform="translate(525, 385)">
+        <path d="M 60 10 Q 20 10 20 50" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <path d="M 60 32 H 15" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <path d="M 60 55 Q 20 55 20 20" fill="none" stroke="black" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <rect x="60" y="0" width="50" height="22" fill="white" stroke="black"/><text x="85" y="15" text-anchor="middle" font-size="10">{res['er']:,}</text>
+        <rect x="60" y="22" width="50" height="22" fill="white" stroke="black"/><text x="85" y="37" text-anchor="middle" font-size="10">{res['et']:,}</text>
+        <rect x="60" y="44" width="50" height="22" fill="white" stroke="black"/><text x="85" y="59" text-anchor="middle" font-size="10">{res['el']:,}</text>
+        <text x="135" y="37" text-anchor="middle" font-size="12" font-weight="bold">{in_e:,}</text>
     </g>
 
-    <g transform="translate(540, 385)">
-        <path d="M 65 11 Q 10 11 10 60" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="0" y="0" width="52" height="23" fill="white" stroke="black"/><text x="26" y="16" text-anchor="middle" font-size="11" font-weight="bold">{res['er']:,}</text>
-        
-        <path d="M 65 34 H -25" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="0" y="23" width="52" height="23" fill="white" stroke="black"/><text x="26" y="39" text-anchor="middle" font-size="11" font-weight="bold">{res['et']:,}</text>
-        
-        <path d="M 65 57 Q 10 57 10 10" fill="none" stroke="black" stroke-width="3.5" marker-end="url(#arrow)"/>
-        <rect x="0" y="46" width="52" height="23" fill="white" stroke="black"/><text x="26" y="62" text-anchor="middle" font-size="11" font-weight="bold">{res['el']:,}</text>
-    </g>
+    <text x="340" y="150" transform="rotate(-90 340,150)" font-size="12" fill="blue" font-weight="bold">{n_road}</text>
+    <text x="515" y="580" transform="rotate(-90 515,580)" font-size="12" fill="blue" font-weight="bold">{s_road}</text>
+    <text x="650" y="270" font-size="12" fill="blue" font-weight="bold">{e_road}</text>
+    <text x="100" y="485" font-size="12" fill="blue" font-weight="bold">{w_road}</text>
+
 </svg>
 </div>
 """
