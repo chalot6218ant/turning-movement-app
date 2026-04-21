@@ -99,4 +99,15 @@ svg_content = f"""
     </g>
 
     <rect x="580" y="520" width="190" height="90" fill="#fdfdfd" stroke="#333" rx="5" stroke-width="1"/>
-    <text x="675" y="540" text-anchor="middle" font-
+    <text x="675" y="540" text-anchor="middle" font-size="13" font-weight="bold">Summary Total</text>
+    <line x1="590" y1="545" x2="760" y2="545" stroke="#eee" />
+    <text x="595" y="565" font-size="11" fill="green">Total In: {sum_in:,}</text>
+    <text x="595" y="583" font-size="11" fill="red">Total Out: {sum_out:,}</text>
+    <text x="595" y="602" font-size="12" font-weight="bold">Grand Total: {sum_in + sum_out:,}</text>
+
+    <g transform="translate(740, 100)"><circle r="18" fill="none" stroke="#666"/><path d="M 0 -14 L 3 0 L -3 0 Z" fill="red"/><text y="15" text-anchor="middle" font-size="9" font-weight="bold">N</text></g>
+</svg>
+</div>
+"""
+
+st.components.v1.html(svg_content, height=720)
