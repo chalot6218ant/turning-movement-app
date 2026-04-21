@@ -1,62 +1,60 @@
 import streamlit as st
-import numpy as np
 
-st.set_page_config(layout="wide", page_title="Traffic Movement Analysis")
+st.set_page_config(layout="wide", page_title="Manual Traffic Movement Analysis")
 
-# --- 1. ส่วนรับข้อมูล (Inputs) ---
+# --- Sidebar: ชื่อถนน ---
 with st.sidebar:
-    st.header("📝 ตั้งค่าพื้นฐาน")
-    title_text = st.text_input("ชื่อกราฟ (Title)", "Year 2006 AM")
+    st.header("📝 ตั้งค่าชื่อถนน")
+    title_text = st.text_input("ชื่อกราฟ", "ปริมาณจราจรปี 2569")
     n_road = st.text_input("ถนนทิศเหนือ (North)", "ถ.กาญจนาภิเษก (N)")
     s_road = st.text_input("ถนนทิศใต้ (South)", "ถ.กาญจนาภิเษก (S)")
     e_road = st.text_input("ถนนทิศตะวันออก (East)", "ถ.โครงการแนวตะวันออก-ตก")
     w_road = st.text_input("ถนนทิศตะวันตก (West)", "ถ.บางกรวย-ไทรน้อย")
 
-st.subheader("🚗 ป้อนปริมาณจราจร (PCU/Hr)")
-c1, c2, c3, c4 = st.columns(4)
-with c1:
-    in_n = st.number_input(f"ขาเข้า (In) {n_road}", value=7037)
-    out_n = st.number_input(f"ขาออก (Out) {n_road}", value=6810)
-with c2:
-    in_s = st.number_input(f"ขาเข้า (In) {s_road}", value=8086)
-    out_s = st.number_input(f"ขาออก (Out) {s_road}", value=7659)
-with c3:
-    in_e = st.number_input(f"ขาเข้า (In) {e_road}", value=3334)
-    out_e = st.number_input(f"ขาออก (Out) {e_road}", value=2245)
-with c4:
-    in_w = st.number_input(f"ขาเข้า (In) {w_road}", value=2680)
-    out_w = st.number_input(f"ขาออก (Out) {w_road}", value=2245)
+st.subheader("🚗 ป้อนปริมาณจราจรรายเลน (Turning Movement Volume)")
 
-# --- 2. ส่วนการคำนวณ (Fratar Balancing) ---
-# ระบบจะรันส่วนนี้ใหม่ทุกครั้งที่ค่า Input ด้านบนเปลี่ยน
-t_in = np.array([in_n, in_s, in_e, in_w])
-t_out = np.array([out_n, out_s, out_e, out_w])
+# --- ส่วนรับข้อมูล 4 ทิศทาง ---
+col1, col2, col3, col4 = st.columns(4)
 
-# Seed สำหรับกระจายรถ (เลี้ยวซ้าย/ตรง/เลี้ยวขวา)
-seed = np.array([
-    [0, 0.7, 0.15, 0.15], # จาก N ไป S, E, W
-    [0.7, 0, 0.15, 0.15], # จาก S ไป N, E, W
-    [0.15, 0.15, 0, 0.7], # จาก E ไป W, N, S
-    [0.15, 0.15, 0.7, 0]  # จาก W ไป E, N, S
-])
+with col1:
+    st.info(f"📍 {n_road}")
+    nl = st.number_input(f"North: เลี้ยวซ้าย (L)", value=816)
+    nt = st.number_input(f"North: ตรงไป (T)", value=5025)
+    nr = st.number_input(f"North: เลี้ยวขวา (R)", value=1196)
+    in_n = nl + nt + nr
+    st.caption(f"รวม Inbound: {in_n:,}")
 
-mat = seed.copy()
-for _ in range(25): # Balancing 25 รอบ
-    mat = (mat.T * (t_in / np.maximum(mat.sum(axis=1), 1))).T
-    mat = mat * (t_out / np.maximum(mat.sum(axis=0), 1))
+with col2:
+    st.info(f"📍 {s_road}")
+    sl = st.number_input(f"South: เลี้ยวซ้าย (L)", value=1803) # อิงตามเข็มนาฬิกา
+    st = st.number_input(f"South: ตรงไป (T)", value=5053)
+    sr = st.number_input(f"South: เลี้ยวขวา (R)", value=1230)
+    in_s = sl + st + sr
+    st.caption(f"รวม Inbound: {in_s:,}")
 
-def gv(o, d): return f"{int(round(mat[o, d])):,}"
+with col3:
+    st.info(f"📍 {e_road}")
+    el = st.number_input(f"East: เลี้ยวซ้าย (L)", value=1227)
+    et = st.number_input(f"East: ตรงไป (T)", value=199)
+    er = st.number_input(f"East: เลี้ยวขวา (R)", value=819)
+    in_e = el + et + er
+    st.caption(f"รวม Inbound: {in_e:,}")
 
-# ดึงค่าที่คำนวณได้มาเก็บในตัวแปรสำหรับ SVG
-# n=0, s=1, e=2, w=3
-val = {
-    'nl': gv(0, 2), 'nt': gv(0, 1), 'nr': gv(0, 3), # North Inbound
-    'sl': gv(1, 3), 'st': gv(1, 0), 'sr': gv(1, 2), # South Inbound
-    'el': gv(2, 1), 'et': gv(2, 3), 'er': gv(2, 0), # East Inbound
-    'wl': gv(3, 0), 'wt': gv(3, 2), 'wr': gv(3, 1)  # West Inbound
-}
+with col4:
+    st.info(f"📍 {w_road}")
+    wl = st.number_input(f"West: เลี้ยวซ้าย (L)", value=938)
+    wt = st.number_input(f"West: ตรงไป (T)", value=335)
+    wr = st.number_input(f"West: เลี้ยวขวา (R)", value=1407)
+    in_w = wl + wt + wr
+    st.caption(f"รวม Inbound: {in_w:,}")
 
-# --- 3. ส่วนการสร้าง Diagram (SVG) ---
+# --- คำนวณ Outbound (ผลรวมรถที่มุ่งหน้าไปทิศนั้นๆ) ---
+out_n = st + el + wr
+out_s = nt + er + wl
+out_e = nl + st + wr # ปรับตาม logic การเลี้ยวของสี่แยก
+out_w = nr + sl + et
+
+# --- ส่วนการสร้าง Diagram (SVG) ---
 svg_code = f"""
 <div style="display: flex; justify-content: center;">
 <svg viewBox="0 0 850 750" xmlns="http://www.w3.org/2000/svg" style="background:white; border:1px solid #ddd; width:100%; max-width:850px;">
@@ -87,27 +85,27 @@ svg_code = f"""
     </g>
 
     <g transform="translate(430, 215)">
-        <text x="12" y="-10" text-anchor="middle" font-size="20">↰</text><rect x="0" y="0" width="24" height="35" fill="white" stroke="black"/><text x="12" y="22" text-anchor="middle" font-size="10" transform="rotate(-90 12,22)">{val['nl']}</text>
-        <text x="36" y="-10" text-anchor="middle" font-size="20">↓</text><rect x="24" y="0" width="24" height="35" fill="white" stroke="black"/><text x="36" y="22" text-anchor="middle" font-size="10" transform="rotate(-90 36,22)">{val['nt']}</text>
-        <text x="60" y="-10" text-anchor="middle" font-size="20">↱</text><rect x="48" y="0" width="24" height="35" fill="white" stroke="black"/><text x="60" y="22" text-anchor="middle" font-size="10" transform="rotate(-90 60,22)">{val['nr']}</text>
+        <text x="12" y="-10" text-anchor="middle" font-size="20">↰</text><rect x="0" y="0" width="24" height="40" fill="white" stroke="black"/><text x="12" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 12,25)">{nl:,}</text>
+        <text x="36" y="-10" text-anchor="middle" font-size="20">↓</text><rect x="24" y="0" width="24" height="40" fill="white" stroke="black"/><text x="36" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 36,25)">{nt:,}</text>
+        <text x="60" y="-10" text-anchor="middle" font-size="20">↱</text><rect x="48" y="0" width="24" height="40" fill="white" stroke="black"/><text x="60" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 60,25)">{nr:,}</text>
     </g>
 
-    <g transform="translate(352, 420)">
-        <rect x="0" y="0" width="24" height="35" fill="white" stroke="black"/><text x="12" y="22" text-anchor="middle" font-size="10" transform="rotate(-90 12,22)">{val['sr']}</text><text x="12" y="55" text-anchor="middle" font-size="20">↰</text>
-        <rect x="24" y="0" width="24" height="35" fill="white" stroke="black"/><text x="36" y="22" text-anchor="middle" font-size="10" transform="rotate(-90 36,22)">{val['st']}</text><text x="36" y="55" text-anchor="middle" font-size="20">↑</text>
-        <rect x="48" y="0" width="24" height="35" fill="white" stroke="black"/><text x="60" y="22" text-anchor="middle" font-size="10" transform="rotate(-90 60,22)">{val['sl']}</text><text x="60" y="55" text-anchor="middle" font-size="20">↱</text>
+    <g transform="translate(352, 415)">
+        <rect x="0" y="0" width="24" height="40" fill="white" stroke="black"/><text x="12" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 12,25)">{sr:,}</text><text x="12" y="60" text-anchor="middle" font-size="20">↰</text>
+        <rect x="24" y="0" width="24" height="40" fill="white" stroke="black"/><text x="36" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 36,25)">{st:,}</text><text x="36" y="60" text-anchor="middle" font-size="20">↑</text>
+        <rect x="48" y="0" width="24" height="40" fill="white" stroke="black"/><text x="60" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 60,25)">{sl:,}</text><text x="60" y="60" text-anchor="middle" font-size="20">↱</text>
     </g>
 
-    <g transform="translate(275, 295)">
-        <text x="-15" y="18" text-anchor="middle" font-size="20">↱</text><rect x="0" y="0" width="45" height="22" fill="white" stroke="black"/><text x="22" y="15" text-anchor="middle" font-size="11">{val['wr']}</text>
-        <text x="-15" y="40" text-anchor="middle" font-size="20">→</text><rect x="0" y="22" width="45" height="22" fill="white" stroke="black"/><text x="22" y="37" text-anchor="middle" font-size="11">{val['wt']}</text>
-        <text x="-15" y="62" text-anchor="middle" font-size="20">↳</text><rect x="0" y="44" width="45" height="22" fill="white" stroke="black"/><text x="22" y="59" text-anchor="middle" font-size="11">{val['wl']}</text>
+    <g transform="translate(265, 295)">
+        <text x="-15" y="18" text-anchor="middle" font-size="20">↱</text><rect x="0" y="0" width="48" height="22" fill="white" stroke="black"/><text x="24" y="15" text-anchor="middle" font-size="11">{wl:,}</text>
+        <text x="-15" y="40" text-anchor="middle" font-size="20">→</text><rect x="0" y="22" width="48" height="22" fill="white" stroke="black"/><text x="24" y="37" text-anchor="middle" font-size="11">{wt:,}</text>
+        <text x="-15" y="62" text-anchor="middle" font-size="20">↳</text><rect x="0" y="44" width="48" height="22" fill="white" stroke="black"/><text x="24" y="59" text-anchor="middle" font-size="11">{wr:,}</text>
     </g>
 
-    <g transform="translate(510, 385)">
-        <rect x="0" y="0" width="45" height="22" fill="white" stroke="black"/><text x="22" y="15" text-anchor="middle" font-size="11">{val['er']}</text><text x="60" y="18" text-anchor="middle" font-size="20">↰</text>
-        <rect x="0" y="22" width="45" height="22" fill="white" stroke="black"/><text x="22" y="37" text-anchor="middle" font-size="11">{val['et']}</text><text x="60" y="40" text-anchor="middle" font-size="20">←</text>
-        <rect x="0" y="44" width="45" height="22" fill="white" stroke="black"/><text x="22" y="59" text-anchor="middle" font-size="11">{val['el']}</text><text x="60" y="62" text-anchor="middle" font-size="20">↲</text>
+    <g transform="translate(515, 385)">
+        <rect x="0" y="0" width="48" height="22" fill="white" stroke="black"/><text x="24" y="15" text-anchor="middle" font-size="11">{el:,}</text><text x="65" y="18" text-anchor="middle" font-size="20">↰</text>
+        <rect x="0" y="22" width="48" height="22" fill="white" stroke="black"/><text x="24" y="37" text-anchor="middle" font-size="11">{et:,}</text><text x="65" y="40" text-anchor="middle" font-size="20">←</text>
+        <rect x="0" y="44" width="48" height="22" fill="white" stroke="black"/><text x="24" y="59" text-anchor="middle" font-size="11">{er:,}</text><text x="65" y="62" text-anchor="middle" font-size="20">↲</text>
     </g>
 
     <g transform="translate(780, 100)"><circle r="20" fill="none" stroke="#666"/><path d="M 0 -15 L 5 0 L -5 0 Z" fill="red"/><text y="20" text-anchor="middle" font-size="12" font-weight="bold">N</text></g>
