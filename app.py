@@ -13,7 +13,6 @@ with st.sidebar:
     st.header("📍 ตั้งค่าทางแยก")
     j_type = st.radio("ประเภททางแยก", ["4 แยก", "3 แยก"])
     
-    # กำหนดทิศทาง
     if j_type == "4 แยก":
         legs = ["North (N)", "South (S)", "East (E)", "West (W)"]
     else:
@@ -39,7 +38,6 @@ with st.sidebar:
 # --- ส่วนคำนวณ (Logic) ---
 def calculate_tmc(in_f, out_f, labels, u_p, s_p):
     n = len(in_f)
-    # สร้าง Seed Matrix
     seed = np.ones((n, n)) * ((100 - s_p - u_p) / (n - 1 if n > 1 else 1))
     for i in range(n):
         for j in range(n):
@@ -56,7 +54,7 @@ def calculate_tmc(in_f, out_f, labels, u_p, s_p):
         matrix = matrix * (out_f / np.where(matrix.sum(axis=0)==0, 1, matrix.sum(axis=0)))
     return pd.DataFrame(matrix, index=labels, columns=labels)
 
-# --- ส่วนแสดงผลหน้าแรก (Main UI) ---
+# --- ส่วนแสดงผลหน้าจอหลัก (Main UI) ---
 if st.button("เริ่มคำนวณและแสดงผล"):
     df = calculate_tmc(inbound, outbound, legs, u_pct, s_pct)
     
@@ -69,7 +67,7 @@ if st.button("เริ่มคำนวณและแสดงผล"):
             st.markdown(f"#### 📍 จากทิศทาง: **{origin}**")
             
             # สร้างคอลัมน์ย่อยสำหรับแต่ละทิศทางการไป
-            cols = st.columns(len(legs) + 1) # +1 สำหรับ Total
+            cols = st.columns(len(legs) + 1)
             
             total_in = 0
             for j, destination in enumerate(legs):
@@ -80,12 +78,11 @@ if st.button("เริ่มคำนวณและแสดงผล"):
                     st.metric(label, f"{val:.0f}")
             
             with cols[-1]:
-                st.metric("รวมขาเข้า (Total)", f"{total_in:.0f}", delta_color="off")
+                st.metric("รวมขาเข้า (Total)", f"{total_in:.0f}")
             st.divider()
 
-    # แสดงตาราง Matrix รวมด้านล่าง
-    with st.expander("ดูตาราง Matrix ทั้งหมด (Summary Matrix)"):
-        st.dataframe(df.style.format("{:.0f}").highlight_max(axis=1, color="#D4E6F1"))
+    with st.expander("ดูตาราง Matrix ทั้งหมด"):
+        st.dataframe(df.style.format("{:.0f}"))
         
     csv = df.to_csv().encode('utf-8-sig')
     st.download_button("📥 ดาวน์โหลดข้อมูล (CSV)", csv, "turning_data.csv", "text/csv")
