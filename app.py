@@ -3,16 +3,16 @@ import numpy as np
 
 st.set_page_config(layout="wide", page_title="Traffic Turning Analysis")
 
-# --- 1. ส่วนรับข้อมูล (Total In/Out) ---
+# --- 1. ส่วนรับข้อมูล (Inputs) ---
 with st.sidebar:
     st.header("📝 ตั้งค่าพื้นฐาน")
     title_text = st.text_input("ชื่อกราฟ", "ปริมาณจราจรปี 2569")
-    n_road = st.text_input("ถนนทิศเหนือ", "ถ.กาญจนาภิเษก (N)")
-    s_road = st.text_input("ถนนทิศใต้", "ถ.กาญจนาภิเษก (S)")
-    e_road = st.text_input("ถนนทิศตะวันออก", "ถ.โครงการแนวตะวันออก-ตก")
-    w_road = st.text_input("ถนนทิศตะวันตก", "ถ.บางกรวย-ไทรน้อย")
+    n_road = st.text_input("ถนนทิศเหนือ (N)", "ถ.กาญจนาภิเษก (N)")
+    s_road = st.text_input("ถนนทิศใต้ (S)", "ถ.กาญจนาภิเษก (S)")
+    e_road = st.text_input("ถนนทิศตะวันออก (E)", "ถ.โครงการแนวตะวันออก-ตก")
+    w_road = st.text_input("ถนนทิศตะวันตก (W)", "ถ.บางกรวย-ไทรน้อย")
 
-st.subheader("🚗 วิเคราะห์ Turning Movement จากยอด Inbound/Outbound")
+st.subheader("🚗 วิเคราะห์ Turning Movement (4 แยกพร้อมลูกศรโค้งสมจริง)")
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
@@ -32,40 +32,29 @@ with col4:
     in_w = st.number_input("Inbound (W)", value=2680)
     out_w = st.number_input("Outbound (W)", value=2245)
 
-# --- 2. การคำนวณวิเคราะห์ Turning (Fratar Balancing) ---
-# สร้าง Matrix เริ่มต้น (Seed) ตามพฤติกรรมการเลี้ยวมาตรฐาน
-# 0:North, 1:South, 2:East, 3:West
+# --- 2. การคำนวณวิเคราะห์ (Fratar Method) ---
 t_in = np.array([in_n, in_s, in_e, in_w])
 t_out = np.array([out_n, out_s, out_e, out_w])
 
-# Seed (สัดส่วนโดยประมาณ: ตรง 70%, เลี้ยวอย่างละ 15%)
 seed = np.array([
-    [0.0, 0.7, 0.15, 0.15], # จาก N
-    [0.7, 0.0, 0.15, 0.15], # จาก S
-    [0.15, 0.15, 0.0, 0.7], # จาก E
-    [0.15, 0.15, 0.7, 0.0]  # จาก W
+    [0.0, 0.7, 0.15, 0.15],
+    [0.7, 0.0, 0.15, 0.15],
+    [0.15, 0.15, 0.0, 0.7],
+    [0.15, 0.15, 0.7, 0.0]
 ])
 
 mat = seed.copy()
-# วนลูปคำนวณเพื่อปรับสมดุล (Balancing) ให้ผลรวมตรงกับ In/Out ที่กรอก
 for _ in range(30):
-    # ปรับตามแถว (Inbound)
-    row_sums = mat.sum(axis=1)
-    mat = (mat.T * (t_in / np.maximum(row_sums, 1))).T
-    # ปรับตามคอลัมน์ (Outbound)
-    col_sums = mat.sum(axis=0)
-    mat = mat * (t_out / np.maximum(col_sums, 1))
+    mat = (mat.T * (t_in / np.maximum(mat.sum(axis=1), 1))).T
+    mat = mat * (t_out / np.maximum(mat.sum(axis=0), 1))
 
-# ฟังก์ชันดึงค่าที่วิเคราะห์ได้
-def get_v(o, d):
-    return int(round(mat[o, d]))
+def gv(o, d): return int(round(mat[o, d]))
 
-# เก็บค่าเข้า Dictionary เพื่อนำไปวาด (ตามทิศทางเลี้ยวจริง)
 res = {
-    'nl': get_v(0, 2), 'nt': get_v(0, 1), 'nr': get_v(0, 3),
-    'sl': get_v(1, 3), 'st': get_v(1, 0), 'sr': get_v(1, 2),
-    'el': get_v(2, 1), 'et': get_v(2, 3), 'er': get_v(2, 0),
-    'wl': get_v(3, 0), 'wt': get_v(3, 2), 'wr': get_v(3, 1)
+    'nl': gv(0, 2), 'nt': gv(0, 1), 'nr': gv(0, 3),
+    'sl': gv(1, 3), 'st': gv(1, 0), 'sr': gv(1, 2),
+    'el': gv(2, 1), 'et': gv(2, 3), 'er': gv(2, 0),
+    'wl': gv(3, 0), 'wt': gv(3, 2), 'wr': gv(3, 1)
 }
 
 # --- 3. ส่วนการสร้าง Diagram (SVG) ---
@@ -77,6 +66,7 @@ svg_code = f"""
 
     <path d="M 350 60 V 280 M 500 60 V 280 M 350 470 V 700 M 500 470 V 700" stroke="black" stroke-width="2" fill="none"/>
     <path d="M 50 280 H 350 M 50 470 H 350 M 500 280 H 800 M 500 470 H 800" stroke="black" stroke-width="2" fill="none"/>
+    
     <line x1="425" y1="60" x2="425" y2="280" stroke="#aaa" stroke-dasharray="5,5" />
     <line x1="425" y1="470" x2="425" y2="700" stroke="#aaa" stroke-dasharray="5,5" />
     <line x1="50" y1="375" x2="350" y2="375" stroke="#aaa" stroke-dasharray="5,5" />
@@ -98,31 +88,48 @@ svg_code = f"""
         <rect x="710" y="420" width="60" height="25" fill="white" stroke="black"/><text x="740" y="437" text-anchor="middle">{out_e:,}</text>
     </g>
 
+    <defs>
+        <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="black" />
+        </marker>
+    </defs>
+
     <g transform="translate(430, 205)">
-        <text x="12" y="-10" text-anchor="middle" font-size="20">↰</text><rect x="0" y="0" width="24" height="45" fill="white" stroke="black"/><text x="12" y="28" text-anchor="middle" font-size="10" transform="rotate(-90 12,28)">{res['nl']:,}</text>
-        <text x="36" y="-10" text-anchor="middle" font-size="20">↓</text><rect x="24" y="0" width="24" height="45" fill="white" stroke="black"/><text x="36" y="28" text-anchor="middle" font-size="10" transform="rotate(-90 36,28)">{res['nt']:,}</text>
-        <text x="60" y="-10" text-anchor="middle" font-size="20">↱</text><rect x="48" y="0" width="24" height="45" fill="white" stroke="black"/><text x="60" y="28" text-anchor="middle" font-size="10" transform="rotate(-90 60,28)">{res['nr']:,}</text>
+        <path d="M 12 -15 Q 12 15 40 15" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="0" y="0" width="24" height="40" fill="white" stroke="black"/><text x="12" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 12,25)">{res['nl']:,}</text>
+        <path d="M 36 -15 V 10" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="24" y="0" width="24" height="40" fill="white" stroke="black"/><text x="36" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 36,25)">{res['nt']:,}</text>
+        <path d="M 60 -15 Q 60 15 32 15" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="48" y="0" width="24" height="40" fill="white" stroke="black"/><text x="60" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 60,25)">{res['nr']:,}</text>
     </g>
 
-    <g transform="translate(352, 410)">
-        <rect x="0" y="0" width="24" height="45" fill="white" stroke="black"/><text x="12" y="28" text-anchor="middle" font-size="10" transform="rotate(-90 12,28)">{res['sr']:,}</text><text x="12" y="65" text-anchor="middle" font-size="20">↰</text>
-        <rect x="24" y="0" width="24" height="45" fill="white" stroke="black"/><text x="36" y="28" text-anchor="middle" font-size="10" transform="rotate(-90 36,28)">{res['st']:,}</text><text x="36" y="65" text-anchor="middle" font-size="20">↑</text>
-        <rect x="48" y="0" width="24" height="45" fill="white" stroke="black"/><text x="60" y="28" text-anchor="middle" font-size="10" transform="rotate(-90 60,28)">{res['sl']:,}</text><text x="60" y="65" text-anchor="middle" font-size="20">↱</text>
+    <g transform="translate(352, 415)">
+        <path d="M 12 55 Q 12 25 40 25" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="0" y="0" width="24" height="40" fill="white" stroke="black"/><text x="12" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 12,25)">{res['sr']:,}</text>
+        <path d="M 36 55 V 30" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="24" y="0" width="24" height="40" fill="white" stroke="black"/><text x="36" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 36,25)">{res['st']:,}</text>
+        <path d="M 60 55 Q 60 25 32 25" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="48" y="0" width="24" height="40" fill="white" stroke="black"/><text x="60" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 60,25)">{res['sl']:,}</text>
     </g>
 
-    <g transform="translate(260, 290)">
-        <text x="-15" y="18" text-anchor="middle" font-size="20">↱</text><rect x="0" y="0" width="50" height="23" fill="white" stroke="black"/><text x="25" y="16" text-anchor="middle" font-size="11">{res['wl']:,}</text>
-        <text x="-15" y="41" text-anchor="middle" font-size="20">→</text><rect x="0" y="23" width="50" height="23" fill="white" stroke="black"/><text x="25" y="39" text-anchor="middle" font-size="11">{res['wt']:,}</text>
-        <text x="-15" y="64" text-anchor="middle" font-size="20">↳</text><rect x="0" y="46" width="50" height="23" fill="white" stroke="black"/><text x="25" y="62" text-anchor="middle" font-size="11">{res['wr']:,}</text>
+    <g transform="translate(265, 295)">
+        <path d="M -15 11 Q 15 11 15 40" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="0" y="0" width="45" height="22" fill="white" stroke="black"/><text x="22" y="15" text-anchor="middle" font-size="10">{res['wl']:,}</text>
+        <path d="M -15 33 H 10" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="0" y="22" width="45" height="22" fill="white" stroke="black"/><text x="22" y="37" text-anchor="middle" font-size="10">{res['wt']:,}</text>
+        <path d="M -15 55 Q 15 55 15 25" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="0" y="44" width="45" height="22" fill="white" stroke="black"/><text x="22" y="59" text-anchor="middle" font-size="10">{res['wr']:,}</text>
     </g>
 
-    <g transform="translate(520, 385)">
-        <rect x="0" y="0" width="50" height="23" fill="white" stroke="black"/><text x="25" y="16" text-anchor="middle" font-size="11">{res['er']:,}</text><text x="65" y="18" text-anchor="middle" font-size="20">↰</text>
-        <rect x="0" y="23" width="50" height="23" fill="white" stroke="black"/><text x="25" y="39" text-anchor="middle" font-size="11">{res['et']:,}</text><text x="65" y="41" text-anchor="middle" font-size="20">←</text>
-        <rect x="0" y="46" width="50" height="23" fill="white" stroke="black"/><text x="25" y="62" text-anchor="middle" font-size="11">{res['el']:,}</text><text x="65" y="64" text-anchor="middle" font-size="20">↲</text>
+    <g transform="translate(540, 385)">
+        <path d="M 60 11 Q 30 11 30 40" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="0" y="0" width="45" height="22" fill="white" stroke="black"/><text x="22" y="15" text-anchor="middle" font-size="10">{res['er']:,}</text>
+        <path d="M 60 33 H 35" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="0" y="22" width="45" height="22" fill="white" stroke="black"/><text x="22" y="37" text-anchor="middle" font-size="10">{res['et']:,}</text>
+        <path d="M 60 55 Q 30 55 30 25" fill="none" stroke="black" stroke-width="1.2" marker-end="url(#arr)"/>
+        <rect x="0" y="44" width="45" height="22" fill="white" stroke="black"/><text x="22" y="59" text-anchor="middle" font-size="10">{res['el']:,}</text>
     </g>
 
-    <g transform="translate(780, 100)"><circle r="20" fill="none" stroke="#666"/><path d="M 0 -15 L 5 0 L -5 0 Z" fill="red"/><text y="20" text-anchor="middle" font-size="12" font-weight="bold">N</text></g>
 </svg>
 </div>
 """
