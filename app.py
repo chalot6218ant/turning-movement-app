@@ -11,25 +11,37 @@ with st.sidebar:
     rd_e = st.text_input("ถนนทิศตะวันออก", "งามวงศ์วาน")
     rd_w = st.text_input("ถนนทิศตะวันตก", "รัตนาธิเบศร์")
 
-# --- Input Area (ย่อส่วนลง) ---
-with st.expander("📝 ป้อนปริมาณจราจร", expanded=True):
+# --- Input Area ---
+with st.expander("📝 ป้อนปริมาณจราจร (L = เลี้ยวซ้าย, T = ตรงไป, R = เลี้ยวขวา)", expanded=True):
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        n_l, n_t, n_r = st.number_input("N: L/T/R", 25, 1190, 2362, key="n")
+        st.write(f"**ทิศเหนือ ({rd_n})**")
+        n_l = st.number_input("N - L", value=25)
+        n_t = st.number_input("N - T", value=1190)
+        n_r = st.number_input("N - R", value=2362)
     with c2:
-        s_l, s_t, s_r = st.number_input("S: L/T/R", 1693, 481, 60, key="s")
+        st.write(f"**ทิศใต้ ({rd_s})**")
+        s_l = st.number_input("S - L", value=1693)
+        s_t = st.number_input("S - T", value=481)
+        s_r = st.number_input("S - R", value=60)
     with c3:
-        e_l, e_t, e_r = st.number_input("E: L/T/R", 752, 1762, 1114, key="e")
+        st.write(f"**ทิศตะวันออก ({rd_e})**")
+        e_l = st.number_input("E - L", value=752)
+        e_t = st.number_input("E - T", value=1762)
+        e_r = st.number_input("E - R", value=1114)
     with c4:
-        w_l, w_t, w_r = st.number_input("W: L/T/R", 516, 3935, 37, key="w")
+        st.write(f"**ทิศตะวันตก ({rd_w})**")
+        w_l = st.number_input("W - L", value=516)
+        w_t = st.number_input("W - T", value=3935)
+        w_r = st.number_input("W - R", value=37)
 
-# --- คำนวณ ---
+# --- คำนวณผลรวม ---
 in_n, out_n = (n_l+n_t+n_r), (s_t+e_r+w_l)
 in_s, out_s = (s_l+s_t+s_r), (n_t+w_r+e_l)
 in_e, out_e = (e_l+e_t+e_r), (w_t+n_l+s_r)
 in_w, out_w = (w_l+w_t+w_r), (e_t+s_l+n_r)
 
-# --- SVG Code (ปรับขนาดให้กระชับ 600x500) ---
+# --- SVG Drawing ---
 svg_draw = f"""
 <div style="display: flex; justify-content: center;">
 <svg viewBox="0 0 600 500" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 600px; background: white; border: 1px solid #ccc;">
@@ -45,10 +57,10 @@ svg_draw = f"""
     <path d="M 250 40 V 210 M 350 40 V 210 M 250 290 V 460 M 350 290 V 460" stroke="black" fill="none" />
     <path d="M 40 210 H 250 M 40 290 H 250 M 350 210 H 560 M 350 290 H 560" stroke="black" fill="none" />
 
-    <text x="300" y="140" transform="rotate(-90 300,140)" font-size="11" fill="blue">{rd_n}</text>
-    <text x="300" y="360" transform="rotate(-90 300,360)" font-size="11" fill="blue">{rd_s}</text>
-    <text x="450" y="255" font-size="11" fill="blue">{rd_e}</text>
-    <text x="140" y="255" font-size="11" fill="blue">{rd_w}</text>
+    <text x="300" y="140" transform="rotate(-90 300,140)" font-size="11" fill="blue" font-weight="bold">{rd_n}</text>
+    <text x="300" y="360" transform="rotate(-90 300,360)" font-size="11" fill="blue" font-weight="bold">{rd_s}</text>
+    <text x="450" y="255" font-size="11" fill="blue" font-weight="bold">{rd_e}</text>
+    <text x="140" y="255" font-size="11" fill="blue" font-weight="bold">{rd_w}</text>
 
     <rect x="255" y="60" width="40" height="20" fill="white" stroke="black"/><text x="275" y="74" text-anchor="middle" font-size="10">{out_n:,}</text>
     <rect x="305" y="60" width="40" height="20" fill="white" stroke="black"/><text x="325" y="74" text-anchor="middle" font-size="10">{in_n:,}</text>
@@ -88,5 +100,4 @@ svg_draw = f"""
 </div>
 """
 
-# --- ส่วนสำคัญ: ต้องใช้ st.components.v1.html เพื่อแสดงภาพ ---
 st.components.v1.html(svg_draw, height=520)
