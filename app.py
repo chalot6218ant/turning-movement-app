@@ -12,7 +12,7 @@ with st.sidebar:
     e_road = st.text_input("ถนนทิศตะวันออก (E)", "ถ.โครงการแนวตะวันออก-ตก")
     w_road = st.text_input("ถนนทิศตะวันตก (W)", "ถ.บางกรวย-ไทรน้อย")
 
-st.subheader("🚗 วิเคราะห์ Turning Movement (ปรับขนาดลูกศรและตัวเลข)")
+st.subheader("🚗 วิเคราะห์ Turning Movement (ตัวเลขใหญ่พิเศษ & จัดกึ่งกลาง)")
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
@@ -66,11 +66,11 @@ svg_code = f"""
         </marker>
     </defs>
 
-    <g font-size="14" font-weight="bold" font-family="Arial" fill="#d35400">
-        <text x="465" y="75" text-anchor="middle">IN: {in_n:,}</text> <text x="385" y="75" text-anchor="middle">OUT: {out_n:,}</text>
-        <text x="385" y="685" text-anchor="middle">IN: {in_s:,}</text> <text x="465" y="685" text-anchor="middle">OUT: {out_s:,}</text>
-        <text x="100" y="330" text-anchor="middle">IN: {in_w:,}</text> <text x="100" y="440" text-anchor="middle">OUT: {out_w:,}</text>
-        <text x="750" y="330" text-anchor="middle">IN: {in_e:,}</text> <text x="750" y="440" text-anchor="middle">OUT: {out_e:,}</text>
+    <g font-size="16" font-weight="bold" font-family="Arial">
+        <text x="465" y="80" text-anchor="middle" fill="#2E7D32">IN: {in_n:,}</text> <text x="385" y="80" text-anchor="middle" fill="#C62828">OUT: {out_n:,}</text>
+        <text x="385" y="680" text-anchor="middle" fill="#2E7D32">IN: {in_s:,}</text> <text x="465" y="680" text-anchor="middle" fill="#C62828">OUT: {out_s:,}</text>
+        <text x="120" y="320" text-anchor="middle" fill="#2E7D32">IN: {in_w:,}</text> <text x="120" y="440" text-anchor="middle" fill="#C62828">OUT: {out_w:,}</text>
+        <text x="730" y="320" text-anchor="middle" fill="#2E7D32">IN: {in_e:,}</text> <text x="730" y="440" text-anchor="middle" fill="#C62828">OUT: {out_e:,}</text>
     </g>
 
     <g transform="translate(435, 230)">
@@ -78,9 +78,14 @@ svg_code = f"""
         <path d="M 32 -30 V 10" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         <path d="M 14 -30 Q 14 0 -15 0" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         
-        <rect x="42" y="-75" width="18" height="45" fill="white" stroke="black"/><text x="51" y="-52" text-anchor="middle" font-size="11" font-weight="bold" transform="rotate(-90 51,-52)">{res['nl']:,}</text>
-        <rect x="23" y="-75" width="18" height="45" fill="white" stroke="black"/><text x="32" y="-52" text-anchor="middle" font-size="11" font-weight="bold" transform="rotate(-90 32,-52)">{res['nt']:,}</text>
-        <rect x="4" y="-75" width="18" height="45" fill="white" stroke="black"/><text x="13" y="-52" text-anchor="middle" font-size="11" font-weight="bold" transform="rotate(-90 13,-52)">{res['nr']:,}</text>
+        <rect x="41" y="-85" width="22" height="55" fill="white" stroke="black"/>
+        <text x="52" y="-57" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 52,-57)">{res['nl']:,}</text>
+        
+        <rect x="21" y="-85" width="22" height="55" fill="white" stroke="black"/>
+        <text x="32" y="-57" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 32,-57)">{res['nt']:,}</text>
+        
+        <rect x="1" y="-85" width="22" height="55" fill="white" stroke="black"/>
+        <text x="12" y="-57" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 12,-57)">{res['nr']:,}</text>
     </g>
 
     <g transform="translate(355, 410)">
@@ -88,9 +93,14 @@ svg_code = f"""
         <path d="M 32 45 V 5" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         <path d="M 50 45 Q 50 15 75 15" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         
-        <rect x="5" y="45" width="18" height="45" fill="white" stroke="black"/><text x="14" y="68" text-anchor="middle" font-size="11" font-weight="bold" transform="rotate(-90 14,68)">{res['sl']:,}</text>
-        <rect x="23" y="45" width="18" height="45" fill="white" stroke="black"/><text x="32" y="68" text-anchor="middle" font-size="11" font-weight="bold" transform="rotate(-90 32,68)">{res['st']:,}</text>
-        <rect x="42" y="45" width="18" height="45" fill="white" stroke="black"/><text x="51" y="68" text-anchor="middle" font-size="11" font-weight="bold" transform="rotate(-90 51,68)">{res['sr']:,}</text>
+        <rect x="3" y="45" width="22" height="55" fill="white" stroke="black"/>
+        <text x="14" y="73" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 14,73)">{res['sl']:,}</text>
+        
+        <rect x="21" y="45" width="22" height="55" fill="white" stroke="black"/>
+        <text x="32" y="73" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 32,73)">{res['st']:,}</text>
+        
+        <rect x="39" y="45" width="22" height="55" fill="white" stroke="black"/>
+        <text x="50" y="73" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 50,73)">{res['sr']:,}</text>
     </g>
 
     <g transform="translate(265, 300)">
@@ -98,9 +108,14 @@ svg_code = f"""
         <path d="M -30 32 H 10" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         <path d="M -30 50 Q 5 50 5 75" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         
-        <rect x="-75" y="4" width="45" height="18" fill="white" stroke="black"/><text x="-52" y="18" text-anchor="middle" font-size="11" font-weight="bold">{res['wl']:,}</text>
-        <rect x="-75" y="23" width="45" height="18" fill="white" stroke="black"/><text x="-52" y="37" text-anchor="middle" font-size="11" font-weight="bold">{res['wt']:,}</text>
-        <rect x="-75" y="42" width="45" height="18" fill="white" stroke="black"/><text x="-52" y="56" text-anchor="middle" font-size="11" font-weight="bold">{res['wr']:,}</text>
+        <rect x="-85" y="1" width="55" height="22" fill="white" stroke="black"/>
+        <text x="-57" y="12" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['wl']:,}</text>
+        
+        <rect x="-85" y="21" width="55" height="22" fill="white" stroke="black"/>
+        <text x="-57" y="32" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['wt']:,}</text>
+        
+        <rect x="-85" y="41" width="55" height="55" height="22" fill="white" stroke="black"/>
+        <text x="-57" y="52" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['wr']:,}</text>
     </g>
 
     <g transform="translate(525, 385)">
@@ -108,15 +123,20 @@ svg_code = f"""
         <path d="M 60 32 H 20" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         <path d="M 60 14 Q 25 14 25 -10" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         
-        <rect x="60" y="42" width="45" height="18" fill="white" stroke="black"/><text x="82" y="56" text-anchor="middle" font-size="11" font-weight="bold">{res['el']:,}</text>
-        <rect x="60" y="23" width="45" height="18" fill="white" stroke="black"/><text x="82" y="37" text-anchor="middle" font-size="11" font-weight="bold">{res['et']:,}</text>
-        <rect x="60" y="4" width="45" height="18" fill="white" stroke="black"/><text x="82" y="18" text-anchor="middle" font-size="11" font-weight="bold">{res['er']:,}</text>
+        <rect x="60" y="41" width="55" height="22" fill="white" stroke="black"/>
+        <text x="87" y="52" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['el']:,}</text>
+        
+        <rect x="60" y="21" width="55" height="22" fill="white" stroke="black"/>
+        <text x="87" y="32" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['et']:,}</text>
+        
+        <rect x="60" y="1" width="55" height="22" fill="white" stroke="black"/>
+        <text x="87" y="12" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['er']:,}</text>
     </g>
 
-    <text x="340" y="180" transform="rotate(-90 340,180)" font-size="12" fill="blue" font-weight="bold">{n_road}</text>
-    <text x="515" y="550" transform="rotate(-90 515,550)" font-size="12" fill="blue" font-weight="bold">{s_road}</text>
-    <text x="650" y="270" font-size="12" fill="blue" font-weight="bold">{e_road}</text>
-    <text x="100" y="485" font-size="12" fill="blue" font-weight="bold">{w_road}</text>
+    <text x="340" y="180" transform="rotate(-90 340,180)" font-size="13" fill="blue" font-weight="bold">{n_road}</text>
+    <text x="515" y="550" transform="rotate(-90 515,550)" font-size="13" fill="blue" font-weight="bold">{s_road}</text>
+    <text x="650" y="270" font-size="13" fill="blue" font-weight="bold">{e_road}</text>
+    <text x="100" y="485" font-size="13" fill="blue" font-weight="bold">{w_road}</text>
 </svg>
 </div>
 """
