@@ -13,46 +13,50 @@ with st.sidebar:
 
 st.subheader("🚗 ป้อนปริมาณจราจรรายเลน (Turning Movement Volume)")
 
-# --- ส่วนรับข้อมูล 4 ทิศทาง ---
+# --- ส่วนรับข้อมูล 4 ทิศทาง (แก้ไขชื่อตัวแปรไม่ให้ซ้ำกับ st) ---
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     st.info(f"📍 {n_road}")
-    nl = st.number_input(f"North: เลี้ยวซ้าย (L)", value=816)
-    nt = st.number_input(f"North: ตรงไป (T)", value=5025)
-    nr = st.number_input(f"North: เลี้ยวขวา (R)", value=1196)
-    in_n = nl + nt + nr
-    st.caption(f"รวม Inbound: {in_n:,}")
+    n_l = st.number_input(f"North: เลี้ยวซ้าย (L)", value=816)
+    n_t = st.number_input(f"North: ตรงไป (T)", value=5025)
+    n_r = st.number_input(f"North: เลี้ยวขวา (R)", value=1196)
+    inbound_n = n_l + n_t + n_r
+    st.caption(f"รวม Inbound: {inbound_n:,}")
 
 with col2:
     st.info(f"📍 {s_road}")
-    sl = st.number_input(f"South: เลี้ยวซ้าย (L)", value=1803) # อิงตามเข็มนาฬิกา
-    st = st.number_input(f"South: ตรงไป (T)", value=5053)
-    sr = st.number_input(f"South: เลี้ยวขวา (R)", value=1230)
-    in_s = sl + st + sr
-    st.caption(f"รวม Inbound: {in_s:,}")
+    s_l = st.number_input(f"South: เลี้ยวซ้าย (L)", value=1803)
+    s_t = st.number_input(f"South: ตรงไป (T)", value=5053)
+    s_r = st.number_input(f"South: เลี้ยวขวา (R)", value=1230)
+    inbound_s = s_l + s_t + s_r
+    st.caption(f"รวม Inbound: {inbound_s:,}")
 
 with col3:
     st.info(f"📍 {e_road}")
-    el = st.number_input(f"East: เลี้ยวซ้าย (L)", value=1227)
-    et = st.number_input(f"East: ตรงไป (T)", value=199)
-    er = st.number_input(f"East: เลี้ยวขวา (R)", value=819)
-    in_e = el + et + er
-    st.caption(f"รวม Inbound: {in_e:,}")
+    e_l = st.number_input(f"East: เลี้ยวซ้าย (L)", value=1227)
+    e_t = st.number_input(f"East: ตรงไป (T)", value=199)
+    e_r = st.number_input(f"East: เลี้ยวขวา (R)", value=819)
+    inbound_e = e_l + e_t + e_r
+    st.caption(f"รวม Inbound: {inbound_e:,}")
 
 with col4:
     st.info(f"📍 {w_road}")
-    wl = st.number_input(f"West: เลี้ยวซ้าย (L)", value=938)
-    wt = st.number_input(f"West: ตรงไป (T)", value=335)
-    wr = st.number_input(f"West: เลี้ยวขวา (R)", value=1407)
-    in_w = wl + wt + wr
-    st.caption(f"รวม Inbound: {in_w:,}")
+    w_l = st.number_input(f"West: เลี้ยวซ้าย (L)", value=938)
+    w_t = st.number_input(f"West: ตรงไป (T)", value=335)
+    w_r = st.number_input(f"West: เลี้ยวขวา (R)", value=1407)
+    inbound_w = w_l + w_t + w_r
+    st.caption(f"รวม Inbound: {inbound_w:,}")
 
-# --- คำนวณ Outbound (ผลรวมรถที่มุ่งหน้าไปทิศนั้นๆ) ---
-out_n = st + el + wr
-out_s = nt + er + wl
-out_e = nl + st + wr # ปรับตาม logic การเลี้ยวของสี่แยก
-out_w = nr + sl + et
+# --- คำนวณ Outbound ตามหลักการเลี้ยวจริง ---
+# รถที่ออกไปทิศ North = มาจาก South(ตรง) + East(ขวา) + West(ซ้าย)
+outbound_n = s_t + e_r + w_l
+# รถที่ออกไปทิศ South = มาจาก North(ตรง) + West(ขวา) + East(ซ้าย)
+outbound_s = n_t + w_r + e_l
+# รถที่ออกไปทิศ East = มาจาก West(ตรง) + North(ซ้าย) + South(ขวา)
+outbound_e = w_t + n_l + s_r
+# รถที่ออกไปทิศ West = มาจาก East(ตรง) + South(ซ้าย) + North(ขวา)
+outbound_w = e_t + s_l + n_r
 
 # --- ส่วนการสร้าง Diagram (SVG) ---
 svg_code = f"""
@@ -74,43 +78,7 @@ svg_code = f"""
     <text x="130" y="360" font-size="14" font-weight="bold" fill="blue">{w_road}</text>
 
     <g font-size="12" font-weight="bold">
-        <rect x="430" y="75" width="60" height="25" fill="white" stroke="black"/><text x="460" y="92" text-anchor="middle">{in_n:,}</text>
-        <rect x="360" y="75" width="60" height="25" fill="white" stroke="black"/><text x="390" y="92" text-anchor="middle">{out_n:,}</text>
-        <rect x="360" y="650" width="60" height="25" fill="white" stroke="black"/><text x="390" y="667" text-anchor="middle">{in_s:,}</text>
-        <rect x="430" y="650" width="60" height="25" fill="white" stroke="black"/><text x="460" y="667" text-anchor="middle">{out_s:,}</text>
-        <rect x="80" y="300" width="65" height="25" fill="white" stroke="black"/><text x="112.5" y="317" text-anchor="middle">{in_w:,}</text>
-        <rect x="80" y="425" width="65" height="25" fill="white" stroke="black"/><text x="112.5" y="442" text-anchor="middle">{out_w:,}</text>
-        <rect x="705" y="300" width="65" height="25" fill="white" stroke="black"/><text x="737.5" y="317" text-anchor="middle">{in_e:,}</text>
-        <rect x="705" y="425" width="65" height="25" fill="white" stroke="black"/><text x="737.5" y="442" text-anchor="middle">{out_e:,}</text>
-    </g>
-
-    <g transform="translate(430, 215)">
-        <text x="12" y="-10" text-anchor="middle" font-size="20">↰</text><rect x="0" y="0" width="24" height="40" fill="white" stroke="black"/><text x="12" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 12,25)">{nl:,}</text>
-        <text x="36" y="-10" text-anchor="middle" font-size="20">↓</text><rect x="24" y="0" width="24" height="40" fill="white" stroke="black"/><text x="36" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 36,25)">{nt:,}</text>
-        <text x="60" y="-10" text-anchor="middle" font-size="20">↱</text><rect x="48" y="0" width="24" height="40" fill="white" stroke="black"/><text x="60" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 60,25)">{nr:,}</text>
-    </g>
-
-    <g transform="translate(352, 415)">
-        <rect x="0" y="0" width="24" height="40" fill="white" stroke="black"/><text x="12" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 12,25)">{sr:,}</text><text x="12" y="60" text-anchor="middle" font-size="20">↰</text>
-        <rect x="24" y="0" width="24" height="40" fill="white" stroke="black"/><text x="36" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 36,25)">{st:,}</text><text x="36" y="60" text-anchor="middle" font-size="20">↑</text>
-        <rect x="48" y="0" width="24" height="40" fill="white" stroke="black"/><text x="60" y="25" text-anchor="middle" font-size="9" transform="rotate(-90 60,25)">{sl:,}</text><text x="60" y="60" text-anchor="middle" font-size="20">↱</text>
-    </g>
-
-    <g transform="translate(265, 295)">
-        <text x="-15" y="18" text-anchor="middle" font-size="20">↱</text><rect x="0" y="0" width="48" height="22" fill="white" stroke="black"/><text x="24" y="15" text-anchor="middle" font-size="11">{wl:,}</text>
-        <text x="-15" y="40" text-anchor="middle" font-size="20">→</text><rect x="0" y="22" width="48" height="22" fill="white" stroke="black"/><text x="24" y="37" text-anchor="middle" font-size="11">{wt:,}</text>
-        <text x="-15" y="62" text-anchor="middle" font-size="20">↳</text><rect x="0" y="44" width="48" height="22" fill="white" stroke="black"/><text x="24" y="59" text-anchor="middle" font-size="11">{wr:,}</text>
-    </g>
-
-    <g transform="translate(515, 385)">
-        <rect x="0" y="0" width="48" height="22" fill="white" stroke="black"/><text x="24" y="15" text-anchor="middle" font-size="11">{el:,}</text><text x="65" y="18" text-anchor="middle" font-size="20">↰</text>
-        <rect x="0" y="22" width="48" height="22" fill="white" stroke="black"/><text x="24" y="37" text-anchor="middle" font-size="11">{et:,}</text><text x="65" y="40" text-anchor="middle" font-size="20">←</text>
-        <rect x="0" y="44" width="48" height="22" fill="white" stroke="black"/><text x="24" y="59" text-anchor="middle" font-size="11">{er:,}</text><text x="65" y="62" text-anchor="middle" font-size="20">↲</text>
-    </g>
-
-    <g transform="translate(780, 100)"><circle r="20" fill="none" stroke="#666"/><path d="M 0 -15 L 5 0 L -5 0 Z" fill="red"/><text y="20" text-anchor="middle" font-size="12" font-weight="bold">N</text></g>
-</svg>
-</div>
-"""
-
-st.components.v1.html(svg_code, height=750)
+        <rect x="430" y="75" width="60" height="25" fill="white" stroke="black"/><text x="460" y="92" text-anchor="middle">{inbound_n:,}</text>
+        <rect x="360" y="75" width="60" height="25" fill="white" stroke="black"/><text x="390" y="92" text-anchor="middle">{outbound_n:,}</text>
+        
+        <rect x="360" y="650" width="60" height="25" fill="white" stroke
