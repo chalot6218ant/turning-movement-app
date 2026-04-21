@@ -3,43 +3,29 @@ import numpy as np
 
 st.set_page_config(layout="wide", page_title="Traffic Turning Estimator")
 
-# --- Sidebar: ตั้งค่าชื่อถนน ---
+# --- Sidebar: ชื่อถนนที่แก้ไขได้ ---
 with st.sidebar:
-    st.header("📍 ตั้งค่าชื่อถนน")
-    title_text = st.text_input("หัวข้อแผนภูมิ", "Traffic Movement Estimation")
-    rd_n = st.text_input("ถนนทิศเหนือ", "ติวานนท์")
-    rd_s = st.text_input("ถนนทิศใต้", "ติวานนท์")
-    rd_e = st.text_input("ถนนทิศตะวันออก", "งามวงศ์วาน")
-    rd_w = st.text_input("ถนนทิศตะวันตก", "รัตนาธิเบศร์")
+    st.header("📍 Edit Road Names")
+    title_text = st.text_input("หัวข้อแผนภูมิ", "Traffic Movement Diagram")
+    n_name = st.text_input("ทิศเหนือ (North)", "ติวานนท์")
+    s_name = st.text_input("ทิศใต้ (South)", "ติวานนท์")
+    e_name = st.text_input("ทิศตะวันออก (East)", "งามวงศ์วาน")
+    w_name = st.text_input("ทิศตะวันตก (West)", "รัตนาธิเบศร์")
 
-# --- ส่วนกรอกข้อมูลหลัก (Input Inbound & Outbound) ---
-st.subheader("📊 ป้อนปริมาณรถ ขาเข้า และ ขาออก รวมของแต่ละทิศ")
+# --- ส่วนกรอกข้อมูลหลัก ---
+st.subheader("📊 ป้อนปริมาณจราจร ขาเข้า และ ขาออก (PCU/Hr.)")
 c1, c2, c3, c4 = st.columns(4)
-
 with c1:
-    st.markdown(f"**ทิศเหนือ ({rd_n})**")
-    in_n = st.number_input("In (รวมเข้า)", value=3577, key="in_n")
-    out_n = st.number_input("Out (รวมออก)", value=1632, key="out_n")
+    in_n, out_n = st.number_input(f"In {n_name}", value=3577), st.number_input(f"Out {n_name}", value=1632)
 with c2:
-    st.markdown(f"**ทิศใต้ ({rd_s})**")
-    in_s = st.number_input("In (รวมเข้า)", value=2234, key="in_s")
-    out_s = st.number_input("Out (รวมออก)", value=2458, key="out_s")
+    in_s, out_s = st.number_input(f"In {s_name}", value=2234), st.number_input(f"Out {s_name}", value=2458)
 with c3:
-    st.markdown(f"**ทิศตะวันออก ({rd_e})**")
-    in_e = st.number_input("In (รวมเข้า)", value=3628, key="in_e")
-    out_e = st.number_input("Out (รวมออก)", value=7989, key="out_e")
+    in_e, out_e = st.number_input(f"In {e_name}", value=3628), st.number_input(f"Out {e_name}", value=7989)
 with c4:
-    st.markdown(f"**ทิศตะวันตก ({rd_w})**")
-    in_w = st.number_input("In (รวมเข้า)", value=4488, key="in_w")
-    out_w = st.number_input("Out (รวมออก)", value=1847, key="out_w")
+    in_w, out_w = st.number_input(f"In {w_name}", value=4488), st.number_input(f"Out {w_name}", value=1847)
 
-# --- Algorithm: Iterative Balancing (ประมาณค่าการเลี้ยว) ---
-seed = np.array([
-    [0.0, 0.7, 0.15, 0.15], # จาก N ไป N, S, E, W
-    [0.7, 0.0, 0.15, 0.15], # จาก S ไป N, S, E, W
-    [0.15, 0.15, 0.0, 0.7], # จาก E ไป N, S, E, W
-    [0.15, 0.15, 0.7, 0.0]  # จาก W ไป N, S, E, W
-])
+# --- Algorithm: Fratar Method (Balancing) ---
+seed = np.array([[0, 0.7, 0.15, 0.15], [0.7, 0, 0.15, 0.15], [0.15, 0.15, 0, 0.7], [0.15, 0.15, 0.7, 0]])
 targets_in = np.array([in_n, in_s, in_e, in_w])
 targets_out = np.array([out_n, out_s, out_e, out_w])
 matrix = seed.copy()
@@ -49,67 +35,63 @@ for _ in range(15):
 
 def gv(o, d): return int(round(matrix[o, d]))
 
-# คำนวณการเลี้ยวรายทิศ
-n_l, n_t, n_r = gv(0, 2), gv(0, 1), gv(0, 3)
-s_l, s_t, s_r = gv(1, 3), gv(1, 0), gv(1, 2)
-e_l, e_t, e_r = gv(2, 1), gv(2, 3), gv(2, 0)
-w_l, w_t, w_r = gv(3, 0), gv(3, 2), gv(3, 1)
+# คำนวณ Turning (L/T/R)
+n_l, n_t, n_r = gv(0, 2), gv(0, 1), gv(0, 3) # N ไป E(L), S(T), W(R)
+s_l, s_t, s_r = gv(1, 3), gv(1, 0), gv(1, 2) # S ไป W(L), N(T), E(R)
+e_l, e_t, e_r = gv(2, 1), gv(2, 3), gv(2, 0) # E ไป S(L), W(T), N(R)
+w_l, w_t, w_r = gv(3, 0), gv(3, 2), gv(3, 1) # W ไป N(L), E(T), S(R)
 
-# --- SVG Drawing: แบ่งเส้นขาเข้า-ขาออกชัดเจน ---
-svg_draw = f"""
+# --- SVG Drawing ---
+svg = f"""
 <div style="display: flex; justify-content: center;">
-<svg viewBox="0 0 700 600" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 700px; background: white; border: 1px solid #ccc;">
-    <rect width="100%" height="100%" fill="#ffffff" />
-    <text x="350" y="30" text-anchor="middle" font-size="18" font-weight="bold">{title_text}</text>
+<svg viewBox="0 0 800 650" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 800px; background: white; border: 1px solid #ccc;">
+    <rect width="100%" height="100%" fill="white" />
+    <text x="400" y="40" text-anchor="middle" font-size="20" font-weight="bold">{title_text}</text>
 
-    <path d="M 300 40 V 230 M 350 40 V 230 M 400 40 V 230" stroke="#999" fill="none" stroke-width="1" stroke-dasharray="4"/>
-    <path d="M 300 40 V 230 M 400 40 V 230" stroke="black" fill="none" stroke-width="2"/>
-    <path d="M 300 370 V 560 M 350 370 V 560 M 400 370 V 560" stroke="#999" fill="none" stroke-width="1" stroke-dasharray="4"/>
-    <path d="M 300 370 V 560 M 400 370 V 560" stroke="black" fill="none" stroke-width="2"/>
+    <path d="M 330 50 V 250 M 470 50 V 250 M 330 400 V 600 M 470 400 V 600" stroke="black" stroke-width="2" fill="none"/>
+    <line x1="400" y1="50" x2="400" y2="250" stroke="#ccc" stroke-dasharray="5,5" />
+    <line x1="400" y1="400" x2="400" y2="600" stroke="#ccc" stroke-dasharray="5,5" />
+
+    <path d="M 50 250 H 330 M 50 400 H 330 M 470 250 H 750 M 470 400 H 750" stroke="black" stroke-width="2" fill="none"/>
+    <line x1="50" y1="325" x2="330" y2="325" stroke="#ccc" stroke-dasharray="5,5" />
+    <line x1="470" y1="325" x2="750" y2="325" stroke="#ccc" stroke-dasharray="5,5" />
+
+    <text x="410" y="150" transform="rotate(-90 410,150)" font-size="14" font-weight="bold" fill="blue">{n_name}</text>
+    <text x="410" y="500" transform="rotate(-90 410,500)" font-size="14" font-weight="bold" fill="blue">{s_name}</text>
+    <text x="610" y="315" font-size="14" font-weight="bold" fill="blue">{e_name}</text>
+    <text x="130" y="315" font-size="14" font-weight="bold" fill="blue">{w_name}</text>
+
+    <g transform="translate(345, 60)"><rect width="50" height="25" fill="white" stroke="black"/><text x="25" y="17" text-anchor="middle" font-size="10">Out:{out_n}</text></g>
+    <g transform="translate(405, 60)"><rect width="50" height="25" fill="white" stroke="black"/><text x="25" y="17" text-anchor="middle" font-size="10">In:{in_n}</text></g>
     
-    <path d="M 40 230 H 300 M 40 300 H 300 M 40 370 H 300" stroke="#999" fill="none" stroke-width="1" stroke-dasharray="4"/>
-    <path d="M 40 230 H 300 M 40 370 H 300" stroke="black" fill="none" stroke-width="2"/>
-    <path d="M 400 230 H 660 M 400 300 H 660 M 400 370 H 660" stroke="#999" fill="none" stroke-width="1" stroke-dasharray="4"/>
-    <path d="M 400 230 H 660 M 400 370 H 660" stroke="black" fill="none" stroke-width="2"/>
+    <g transform="translate(345, 565)"><rect width="50" height="25" fill="white" stroke="black"/><text x="25" y="17" text-anchor="middle" font-size="10">In:{in_s}</text></g>
+    <g transform="translate(405, 565)"><rect width="50" height="25" fill="white" stroke="black"/><text x="25" y="17" text-anchor="middle" font-size="10">Out:{out_s}</text></g>
 
-    <rect x="305" y="50" width="40" height="20" fill="white" stroke="black"/><text x="325" y="64" text-anchor="middle" font-size="9">Out:{out_n}</text>
-    <rect x="355" y="50" width="40" height="20" fill="white" stroke="black"/><text x="375" y="64" text-anchor="middle" font-size="9">In:{in_n}</text>
-    
-    <rect x="305" y="520" width="40" height="20" fill="white" stroke="black"/><text x="325" y="534" text-anchor="middle" font-size="9">In:{in_s}</text>
-    <rect x="355" y="520" width="40" height="20" fill="white" stroke="black"/><text x="375" y="534" text-anchor="middle" font-size="9">Out:{out_s}</text>
+    <g transform="translate(60, 260)"><rect width="55" height="25" fill="white" stroke="black"/><text x="27.5" y="17" text-anchor="middle" font-size="10">In:{in_w}</text></g>
+    <g transform="translate(60, 365)"><rect width="55" height="25" fill="white" stroke="black"/><text x="27.5" y="17" text-anchor="middle" font-size="10">Out:{out_w}</text></g>
 
-    <rect x="50" y="240" width="45" height="20" fill="white" stroke="black"/><text x="72.5" y="254" text-anchor="middle" font-size="9">In:{in_w}</text>
-    <rect x="50" y="340" width="45" height="20" fill="white" stroke="black"/><text x="72.5" y="354" text-anchor="middle" font-size="9">Out:{out_w}</text>
+    <g transform="translate(685, 260)"><rect width="55" height="25" fill="white" stroke="black"/><text x="27.5" y="17" text-anchor="middle" font-size="10">In:{in_e}</text></g>
+    <g transform="translate(685, 365)"><rect width="55" height="25" fill="white" stroke="black"/><text x="27.5" y="17" text-anchor="middle" font-size="10">Out:{out_e}</text></g>
 
-    <rect x="600" y="240" width="45" height="20" fill="white" stroke="black"/><text x="622.5" y="254" text-anchor="middle" font-size="9">In:{in_e}</text>
-    <rect x="600" y="340" width="45" height="20" fill="white" stroke="black"/><text x="622.5" y="354" text-anchor="middle" font-size="9">Out:{out_e}</text>
+    <rect x="405" y="215" width="20" height="18" fill="white" stroke="black"/><text x="415" y="228" text-anchor="middle" font-size="9">{n_l}</text><text x="410" y="245" font-size="18">↧</text>
+    <rect x="428" y="215" width="25" height="18" fill="white" stroke="black"/><text x="440.5" y="228" text-anchor="middle" font-size="9">{n_t}</text><text x="435" y="245" font-size="18">↓</text>
+    <rect x="456" y="215" width="20" height="18" fill="white" stroke="black"/><text x="466" y="228" text-anchor="middle" font-size="9">{n_r}</text><text x="461" y="245" font-size="18">↴</text>
 
-    <rect x="345" y="200" width="18" height="15" fill="white" stroke="black"/><text x="354" y="211" text-anchor="middle" font-size="8">{n_l}</text>
-    <rect x="365" y="200" width="22" height="15" fill="white" stroke="black"/><text x="376" y="211" text-anchor="middle" font-size="8">{n_t}</text>
-    <rect x="388" y="200" width="18" height="15" fill="white" stroke="black"/><text x="397" y="211" text-anchor="middle" font-size="8">{n_r}</text>
-    <text x="350" y="228" font-size="14">↧</text><text x="370" y="228" font-size="14">↓</text><text x="390" y="228" font-size="14">↴</text>
+    <rect x="325" y="415" width="20" height="18" fill="white" stroke="black"/><text x="335" y="428" text-anchor="middle" font-size="9">{s_r}</text><text x="330" y="415" font-size="18">↰</text>
+    <rect x="348" y="415" width="25" height="18" fill="white" stroke="black"/><text x="360.5" y="428" text-anchor="middle" font-size="9">{s_t}</text><text x="355" y="415" font-size="18">↑</text>
+    <rect x="376" y="415" width="20" height="18" fill="white" stroke="black"/><text x="386" y="428" text-anchor="middle" font-size="9">{s_l}</text><text x="381" y="415" font-size="18">⤴</text>
 
-    <rect x="302" y="380" width="18" height="15" fill="white" stroke="black"/><text x="311" y="391" text-anchor="middle" font-size="8">{s_r}</text>
-    <rect x="322" y="380" width="22" height="15" fill="white" stroke="black"/><text x="333" y="391" text-anchor="middle" font-size="8">{s_t}</text>
-    <rect x="346" y="380" width="18" height="15" fill="white" stroke="black"/><text x="355" y="391" text-anchor="middle" font-size="8">{s_l}</text>
-    <text x="305" y="380" font-size="14">↰</text><text x="325" y="380" font-size="14">↑</text><text x="348" y="380" font-size="14">⤴</text>
+    <rect x="305" y="255" width="22" height="18" fill="white" stroke="black"/><text x="316" y="268" text-anchor="middle" font-size="9">{w_r}</text><text x="332" y="270" font-size="18">↱</text>
+    <rect x="305" y="278" width="22" height="18" fill="white" stroke="black"/><text x="316" y="291" text-anchor="middle" font-size="9">{w_t}</text><text x="332" y="293" font-size="18">→</text>
+    <rect x="305" y="301" width="22" height="18" fill="white" stroke="black"/><text x="316" y="314" text-anchor="middle" font-size="9">{w_l}</text><text x="332" y="316" font-size="18">↳</text>
 
-    <rect x="275" y="235" width="22" height="15" fill="white" stroke="black"/><text x="286" y="246" text-anchor="middle" font-size="8">{w_r}</text>
-    <rect x="275" y="255" width="22" height="15" fill="white" stroke="black"/><text x="286" y="266" text-anchor="middle" font-size="8">{w_t}</text>
-    <rect x="275" y="275" width="22" height="15" fill="white" stroke="black"/><text x="286" y="286" text-anchor="middle" font-size="8">{w_l}</text>
-    <text x="302" y="248" font-size="14">↱</text><text x="302" y="268" font-size="14">→</text><text x="302" y="288" font-size="14">↳</text>
+    <rect x="473" y="332" width="22" height="18" fill="white" stroke="black"/><text x="484" y="345" text-anchor="middle" font-size="9">{e_l}</text><text x="455" y="347" font-size="18">↤</text>
+    <rect x="473" y="355" width="22" height="18" fill="white" stroke="black"/><text x="484" y="368" text-anchor="middle" font-size="9">{e_t}</text><text x="455" y="370" font-size="18">←</text>
+    <rect x="473" y="378" width="22" height="18" fill="white" stroke="black"/><text x="484" y="391" text-anchor="middle" font-size="9">{e_r}</text><text x="455" y="393" font-size="18">↲</text>
 
-    <rect x="405" y="310" width="22" height="15" fill="white" stroke="black"/><text x="416" y="321" text-anchor="middle" font-size="8">{e_l}</text>
-    <rect x="405" y="330" width="22" height="15" fill="white" stroke="black"/><text x="416" y="341" text-anchor="middle" font-size="8">{e_t}</text>
-    <rect x="405" y="350" width="22" height="15" fill="white" stroke="black"/><text x="416" y="361" text-anchor="middle" font-size="8">{e_r}</text>
-    <text x="385" y="323" font-size="14">↤</text><text x="385" y="343" font-size="14">←</text><text x="385" y="363" font-size="14">↲</text>
-
-    <text x="350" y="140" transform="rotate(-90 350,140)" font-size="12" fill="blue" font-weight="bold">{rd_n}</text>
-    <text x="520" y="335" font-size="12" fill="blue" font-weight="bold">{rd_e}</text>
-
-    <text x="630" y="60" font-size="25">🧭</text><text x="635" y="85" font-size="12" font-weight="bold">N</text>
+    <g transform="translate(720, 80)"><circle r="25" fill="none" stroke="black"/><path d="M 0 -20 L 5 0 L -5 0 Z" fill="red"/><text y="15" text-anchor="middle" font-weight="bold">N</text></g>
 </svg>
 </div>
 """
 
-st.components.v1.html(svg_draw, height=620)
+st.components.v1.html(svg, height=650)
