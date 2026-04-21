@@ -7,31 +7,33 @@ st.set_page_config(layout="wide", page_title="Traffic Movement Analysis")
 with st.sidebar:
     st.header("📝 Edit Road Names")
     title_text = st.text_input("Chart Title", "Year 2006 AM")
-    n_road = st.text_input("North Road", "ติวานนท์ (N)")
-    s_road = st.text_input("South Road", "ติวานนท์ (S)")
+    n_road = st.text_input("North Road", "ถ.กาญจนาภิเษก")
+    s_road = st.text_input("South Road", "ถ.กาญจนาภิเษก")
     e_road = st.text_input("East Road", "งามวงศ์วาน")
-    w_road = st.text_input("West Road", "รัตนาธิเบศร์")
+    w_road = st.text_input("West Road", "ถ.บางกรวย-ไทรน้อย")
 
 # --- ส่วนรับข้อมูล Inbound/Outbound ---
 st.subheader("🚗 Input Traffic Volume (PCU/Hr)")
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    in_n = st.number_input(f"Inbound {n_road}", value=3577)
-    out_n = st.number_input(f"Outbound {n_road}", value=1632)
+    in_n = st.number_input(f"Inbound {n_road}", value=7037)
+    out_n = st.number_input(f"Outbound {n_road}", value=6810)
 with col2:
-    in_s = st.number_input(f"Inbound {s_road}", value=2234)
-    out_s = st.number_input(f"Outbound {s_road}", value=2458)
+    in_s = st.number_input(f"Inbound {s_road}", value=8086)
+    out_s = st.number_input(f"Outbound {s_road}", value=7659)
 with col3:
-    in_e = st.number_input(f"Inbound {e_road}", value=3628)
-    out_e = st.number_input(f"Outbound {e_road}", value=7989)
+    in_e = st.number_input(f"Inbound {e_road}", value=3334)
+    out_e = st.number_input(f"Outbound {e_road}", value=2245)
 with col4:
-    in_w = st.number_input(f"Inbound {w_road}", value=4488)
-    out_w = st.number_input(f"Outbound {w_road}", value=1847)
+    in_w = st.number_input(f"Inbound {w_road}", value=2680)
+    out_w = st.number_input(f"Outbound {w_road}", value=2245)
 
 # --- Calculation: Fratar Balancing ---
 t_in = np.array([in_n, in_s, in_e, in_w])
 t_out = np.array([out_n, out_s, out_e, out_w])
 # Seed matrix: Rows N,S,E,W | Cols N,S,E,W
+# Adjust seed values if known specific turn distributions.
+# This simple seed directs 70% traffic through, 15% to left and 15% to right.
 seed = np.array([[0, 0.7, 0.15, 0.15], [0.7, 0, 0.15, 0.15], [0.15, 0.15, 0, 0.7], [0.15, 0.15, 0.7, 0]])
 mat = seed.copy()
 for _ in range(20):
@@ -50,7 +52,10 @@ v = {
     'wl': gv(3, 0), 'wt': gv(3, 2), 'wr': gv(3, 1)  # West
 }
 
-# --- SVG Design with Double Box style ---
+# --- SVG Design with Double Box style for turning movements ---
+# The logic for placing L, T, R is simplified for diagrammatic purposes.
+# In a real engineering diagram, boxes would align with physical lane markings.
+
 final_svg = f"""
 <div style="display: flex; justify-content: center;">
 <svg viewBox="0 0 800 650" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 800px; background:white; border:1px solid #ccc;">
@@ -78,16 +83,26 @@ final_svg = f"""
     <rect x="675" y="240" width="65" height="25" fill="white" stroke="black"/><text x="707.5" y="257" text-anchor="middle" font-size="11">In:{in_e}</text>
     <rect x="675" y="365" width="65" height="25" fill="white" stroke="black"/><text x="707.5" y="382" text-anchor="middle" font-size="11">Out:{out_e}</text>
 
-    <g font-size="13" font-weight="bold" fill="#333">
-        <text x="412" y="195">↰</text><text x="412" y="220" font-size="11">{v['nl']}</text>
-        <text x="438" y="195">↓</text><text x="438" y="220" font-size="11">{v['nt']}</text>
-        <text x="465" y="195">↱</text><text x="465" y="220" font-size="11">{v['nr']}</text>
+    <g font-size="11" font-weight="bold" fill="#333">
+        <rect x="410" y="180" width="20" height="20" fill="white" stroke="black"/><text x="420" y="196" text-anchor="middle">↰</text>
+        <rect x="410" y="200" width="20" height="20" fill="white" stroke="black"/><text x="420" y="215" text-anchor="middle">{v['nl']}</text>
+        
+        <rect x="430" y="180" width="20" height="20" fill="white" stroke="black"/><text x="440" y="196" text-anchor="middle">↓</text>
+        <rect x="430" y="200" width="20" height="20" fill="white" stroke="black"/><text x="440" y="215" text-anchor="middle">{v['nt']}</text>
+
+        <rect x="450" y="180" width="20" height="20" fill="white" stroke="black"/><text x="460" y="196" text-anchor="middle">↱</text>
+        <rect x="450" y="200" width="20" height="20" fill="white" stroke="black"/><text x="460" y="215" text-anchor="middle">{v['nr']}</text>
     </g>
 
-    <g font-size="13" font-weight="bold" fill="#333">
-        <text x="330" y="420">↰</text><text x="330" y="445" font-size="11">{v['sr']}</text>
-        <text x="355" y="420">↑</text><text x="355" y="445" font-size="11">{v['st']}</text>
-        <text x="382" y="420">↱</text><text x="382" y="445" font-size="11">{v['sl']}</text>
+    <g font-size="11" font-weight="bold" fill="#333">
+        <rect x="330" y="410" width="20" height="20" fill="white" stroke="black"/><text x="340" y="426" text-anchor="middle">↰</text>
+        <rect x="330" y="430" width="20" height="20" fill="white" stroke="black"/><text x="340" y="445" text-anchor="middle">{v['sr']}</text>
+        
+        <rect x="350" y="410" width="20" height="20" fill="white" stroke="black"/><text x="360" y="426" text-anchor="middle">↑</text>
+        <rect x="350" y="430" width="20" height="20" fill="white" stroke="black"/><text x="360" y="445" text-anchor="middle">{v['st']}</text>
+
+        <rect x="370" y="410" width="20" height="20" fill="white" stroke="black"/><text x="380" y="426" text-anchor="middle">↱</text>
+        <rect x="370" y="430" width="20" height="20" fill="white" stroke="black"/><text x="380" y="445" text-anchor="middle">{v['sl']}</text>
     </g>
 
     <rect x="580" y="480" width="180" height="90" fill="#f9f9f9" stroke="#333" rx="5"/>
