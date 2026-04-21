@@ -1,12 +1,12 @@
 import streamlit as st
 import numpy as np
 
-st.set_page_config(layout="wide", page_title="Traffic turning Movement Analysis")
+st.set_page_config(layout="wide", page_title="Traffic Movement Analysis")
 
 # --- Sidebar: สำหรับแก้ไขชื่อถนน ---
 with st.sidebar:
     st.header("📝 Edit Road Names")
-    title_text = st.text_input("Chart Title", "Traffic Movement Estimation 2026")
+    title_text = st.text_input("Chart Title", "Year 2006 AM")
     n_road = st.text_input("North Road", "ติวานนท์ (N)")
     s_road = st.text_input("South Road", "ติวานนท์ (S)")
     e_road = st.text_input("East Road", "งามวงศ์วาน")
@@ -31,6 +31,7 @@ with col4:
 # --- Calculation: Fratar Balancing ---
 t_in = np.array([in_n, in_s, in_e, in_w])
 t_out = np.array([out_n, out_s, out_e, out_w])
+# Seed matrix: Rows N,S,E,W | Cols N,S,E,W
 seed = np.array([[0, 0.7, 0.15, 0.15], [0.7, 0, 0.15, 0.15], [0.15, 0.15, 0, 0.7], [0.15, 0.15, 0.7, 0]])
 mat = seed.copy()
 for _ in range(20):
@@ -38,79 +39,62 @@ for _ in range(20):
     mat = mat * (t_out / np.maximum(mat.sum(axis=0), 1))
 
 def gv(o, d): return int(round(mat[o, d]))
-
-# คำนวณยอดรวม
 sum_in = int(t_in.sum())
 sum_out = int(t_out.sum())
-grand_total = sum_in + sum_out
 
 # Mapping Turning values
 v = {
-    'nl': gv(0, 2), 'nt': gv(0, 1), 'nr': gv(0, 3),
-    'sl': gv(1, 3), 'st': gv(1, 0), 'sr': gv(1, 2),
-    'el': gv(2, 1), 'et': gv(2, 3), 'er': gv(2, 0),
-    'wl': gv(3, 0), 'wt': gv(3, 2), 'wr': gv(3, 1)
+    'nl': gv(0, 2), 'nt': gv(0, 1), 'nr': gv(0, 3), # North
+    'sl': gv(1, 3), 'st': gv(1, 0), 'sr': gv(1, 2), # South
+    'el': gv(2, 1), 'et': gv(2, 3), 'er': gv(2, 0), # East
+    'wl': gv(3, 0), 'wt': gv(3, 2), 'wr': gv(3, 1)  # West
 }
 
-# --- SVG Design ---
+# --- SVG Design with Double Box style ---
 final_svg = f"""
 <div style="display: flex; justify-content: center;">
-<svg viewBox="0 0 800 650" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 800px; background: #ffffff; border: 1px solid #333;">
+<svg viewBox="0 0 800 650" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 800px; background:white; border:1px solid #ccc;">
     <rect width="800" height="60" fill="#f4f4f4" />
     <text x="400" y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="#333">{title_text}</text>
     
-    <path d="M 320 60 V 220 M 480 60 V 220 M 320 400 V 580 M 480 400 V 580" stroke="#000" stroke-width="2.5" fill="none"/>
-    <path d="M 50 220 H 320 M 50 400 H 320 M 480 220 H 750 M 480 400 H 750" stroke="#000" stroke-width="2.5" fill="none"/>
-    <line x1="400" y1="60" x2="400" y2="220" stroke="#aaa" stroke-dasharray="5,5" />
+    <path d="M 330 60 V 230 M 470 60 V 230 M 330 400 V 580 M 470 400 V 580" stroke="#000" stroke-width="2.5" fill="none"/>
+    <path d="M 50 230 H 330 M 50 400 H 330 M 470 230 H 750 M 470 400 H 750" stroke="#000" stroke-width="2.5" fill="none"/>
+    <line x1="400" y1="60" x2="400" y2="230" stroke="#aaa" stroke-dasharray="5,5" />
     <line x1="400" y1="400" x2="400" y2="580" stroke="#aaa" stroke-dasharray="5,5" />
-    <line x1="50" y1="310" x2="320" y2="310" stroke="#aaa" stroke-dasharray="5,5" />
-    <line x1="480" y1="310" x2="750" y2="310" stroke="#aaa" stroke-dasharray="5,5" />
+    <line x1="50" y1="315" x2="330" y2="315" stroke="#aaa" stroke-dasharray="5,5" />
+    <line x1="470" y1="315" x2="750" y2="315" stroke="#aaa" stroke-dasharray="5,5" />
 
     <text x="415" y="140" transform="rotate(-90 415,140)" font-size="14" font-weight="bold" fill="blue">{n_road}</text>
     <text x="415" y="500" transform="rotate(-90 415,500)" font-size="14" font-weight="bold" fill="blue">{s_road}</text>
-    <text x="620" y="300" font-size="14" font-weight="bold" fill="blue">{e_road}</text>
-    <text x="120" y="300" font-size="14" font-weight="bold" fill="blue">{w_road}</text>
+    <text x="610" y="305" font-size="14" font-weight="bold" fill="blue">{e_road}</text>
+    <text x="130" y="305" font-size="14" font-weight="bold" fill="blue">{w_road}</text>
 
-    <g font-size="11" font-weight="bold">
-        <rect x="330" y="70" width="60" height="25" fill="#ffdada" stroke="#000"/><text x="360" y="87" text-anchor="middle">Out:{out_n}</text>
-        <rect x="410" y="70" width="60" height="25" fill="#daffda" stroke="#000"/><text x="440" y="87" text-anchor="middle">In:{in_n}</text>
-        <rect x="330" y="540" width="60" height="25" fill="#daffda" stroke="#000"/><text x="360" y="557" text-anchor="middle">In:{in_s}</text>
-        <rect x="410" y="540" width="60" height="25" fill="#ffdada" stroke="#000"/><text x="440" y="557" text-anchor="middle">Out:{out_s}</text>
-        <rect x="60" y="230" width="65" height="25" fill="#daffda" stroke="#000"/><text x="92.5" y="247" text-anchor="middle">In:{in_w}</text>
-        <rect x="60" y="365" width="65" height="25" fill="#ffdada" stroke="#000"/><text x="92.5" y="382" text-anchor="middle">Out:{out_w}</text>
-        <rect x="675" y="230" width="65" height="25" fill="#daffda" stroke="#000"/><text x="707.5" y="247" text-anchor="middle">In:{in_e}</text>
-        <rect x="675" y="365" width="65" height="25" fill="#ffdada" stroke="#000"/><text x="707.5" y="382" text-anchor="middle">Out:{out_e}</text>
-    </g>
+    <rect x="330" y="70" width="60" height="25" fill="white" stroke="black"/><text x="360" y="87" text-anchor="middle" font-size="11">Out:{out_n}</text>
+    <rect x="410" y="70" width="60" height="25" fill="white" stroke="black"/><text x="440" y="87" text-anchor="middle" font-size="11">In:{in_n}</text>
+    <rect x="330" y="545" width="60" height="25" fill="white" stroke="black"/><text x="360" y="562" text-anchor="middle" font-size="11">In:{in_s}</text>
+    <rect x="410" y="545" width="60" height="25" fill="white" stroke="black"/><text x="440" y="562" text-anchor="middle" font-size="11">Out:{out_s}</text>
+    <rect x="60" y="240" width="65" height="25" fill="white" stroke="black"/><text x="92.5" y="257" text-anchor="middle" font-size="11">In:{in_w}</text>
+    <rect x="60" y="365" width="65" height="25" fill="white" stroke="black"/><text x="92.5" y="382" text-anchor="middle" font-size="11">Out:{out_w}</text>
+    <rect x="675" y="240" width="65" height="25" fill="white" stroke="black"/><text x="707.5" y="257" text-anchor="middle" font-size="11">In:{in_e}</text>
+    <rect x="675" y="365" width="65" height="25" fill="white" stroke="black"/><text x="707.5" y="382" text-anchor="middle" font-size="11">Out:{out_e}</text>
 
-    <g font-size="12" font-weight="bold" fill="#333">
-        <text x="408" y="210">↰ {v['nl']}</text>
-        <text x="435" y="210">↓ {v['nt']}</text>
-        <text x="462" y="210">↱ {v['nr']}</text>
-    </g>
-    <g font-size="12" font-weight="bold" fill="#333">
-        <text x="325" y="390">↰ {v['sr']}</text>
-        <text x="352" y="390">↑ {v['st']}</text>
-        <text x="378" y="390">↱ {v['sl']}</text>
-    </g>
-    <g font-size="12" font-weight="bold" fill="#333">
-        <text x="260" y="245">↱ {v['wr']}</text>
-        <text x="260" y="305">→ {v['wt']}</text>
-        <text x="260" y="355">↳ {v['wl']}</text>
-    </g>
-    <g font-size="12" font-weight="bold" fill="#333" text-anchor="end">
-        <text x="540" y="265">{v['er']} ↰</text>
-        <text x="540" y="315">{v['et']} ←</text>
-        <text x="540" y="375">{v['el']} ↲</text>
+    <g font-size="13" font-weight="bold" fill="#333">
+        <text x="412" y="195">↰</text><text x="412" y="220" font-size="11">{v['nl']}</text>
+        <text x="438" y="195">↓</text><text x="438" y="220" font-size="11">{v['nt']}</text>
+        <text x="465" y="195">↱</text><text x="465" y="220" font-size="11">{v['nr']}</text>
     </g>
 
-    <g transform="translate(580, 480)">
-        <rect width="180" height="100" fill="#f9f9f9" stroke="#333" stroke-width="1.5" rx="5"/>
-        <text x="90" y="25" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">Summary (PCU/Hr)</text>
-        <line x1="10" y1="35" x2="170" y2="35" stroke="#ccc" />
-        <text x="20" y="55" font-size="12" fill="#228B22">Total Inbound: {sum_in:,}</text>
-        <text x="20" y="75" font-size="12" fill="#B22222">Total Outbound: {sum_out:,}</text>
-        <text x="20" y="92" font-size="13" font-weight="bold" fill="#000">Grand Total: {grand_total:,}</text>
+    <g font-size="13" font-weight="bold" fill="#333">
+        <text x="330" y="420">↰</text><text x="330" y="445" font-size="11">{v['sr']}</text>
+        <text x="355" y="420">↑</text><text x="355" y="445" font-size="11">{v['st']}</text>
+        <text x="382" y="420">↱</text><text x="382" y="445" font-size="11">{v['sl']}</text>
     </g>
+
+    <rect x="580" y="480" width="180" height="90" fill="#f9f9f9" stroke="#333" rx="5"/>
+    <text x="670" y="500" text-anchor="middle" font-size="14" font-weight="bold">Summary (PCU/Hr)</text>
+    <text x="595" y="525" font-size="12" fill="green">Total In: {sum_in:,}</text>
+    <text x="595" y="545" font-size="12" fill="red">Total Out: {sum_out:,}</text>
+    <text x="595" y="562" font-size="13" font-weight="bold">Grand Total: {sum_in + sum_out:,}</text>
 
     <g transform="translate(740, 95)"><circle r="18" fill="none" stroke="#666"/><path d="M 0 -14 L 3 0 L -3 0 Z" fill="red"/><text y="15" text-anchor="middle" font-size="9" font-weight="bold">N</text></g>
 </svg>
