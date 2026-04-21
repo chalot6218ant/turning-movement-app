@@ -12,7 +12,7 @@ with st.sidebar:
     e_road = st.text_input("ถนนทิศตะวันออก (E)", "ถ.โครงการแนวตะวันออก-ตก")
     w_road = st.text_input("ถนนทิศตะวันตก (W)", "ถ.บางกรวย-ไทรน้อย")
 
-st.subheader("🚗 วิเคราะห์ Turning Movement (ตัวเลขใหญ่พิเศษ & จัดกึ่งกลาง)")
+st.subheader("🚗 วิเคราะห์ Turning Movement + สรุปผลรวมมุมขวาล่าง")
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
@@ -31,6 +31,13 @@ with col4:
 # --- 2. การคำนวณวิเคราะห์ ---
 t_in = np.array([in_n, in_s, in_e, in_w])
 t_out = np.array([out_n, out_s, out_e, out_w])
+
+# คำนวณสรุปผลรวมทั้งหมด
+total_in = int(np.sum(t_in))
+total_out = int(np.sum(t_out))
+diff = int(abs(total_in - total_out))
+p_diff = (diff / total_in * 100) if total_in > 0 else 0
+
 seed = np.array([[0.0, 0.7, 0.15, 0.15], [0.7, 0.0, 0.15, 0.15], [0.15, 0.15, 0.0, 0.7], [0.15, 0.15, 0.7, 0.0]])
 mat = seed.copy()
 for _ in range(30):
@@ -73,19 +80,28 @@ svg_code = f"""
         <text x="730" y="320" text-anchor="middle" fill="#2E7D32">IN: {in_e:,}</text> <text x="730" y="440" text-anchor="middle" fill="#C62828">OUT: {out_e:,}</text>
     </g>
 
+    <g transform="translate(630, 600)">
+        <rect x="0" y="0" width="200" height="120" fill="#f0f4f7" stroke="#2c3e50" stroke-width="2" rx="10"/>
+        <text x="100" y="25" text-anchor="middle" font-size="16" font-weight="bold" fill="#2c3e50">สรุปผลรวม (Total)</text>
+        <line x1="10" y1="35" x2="190" y2="35" stroke="#2c3e50" stroke-width="1"/>
+        <text x="20" y="60" font-size="14" font-weight="bold" fill="#2E7D32">Total IN:</text> <text x="180" y="60" text-anchor="end" font-size="14" font-weight="bold">{total_in:,}</text>
+        <text x="20" y="85" font-size="14" font-weight="bold" fill="#C62828">Total OUT:</text> <text x="180" y="85" text-anchor="end" font-size="14" font-weight="bold">{total_out:,}</text>
+        <text x="20" y="108" font-size="14" font-weight="bold" fill="#1976D2">Diff (%):</text> <text x="180" y="108" text-anchor="end" font-size="14" font-weight="bold">{diff:,} ({p_diff:.2f}%)</text>
+    </g>
+
     <g transform="translate(435, 230)">
         <path d="M 50 -30 Q 50 0 75 0" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         <path d="M 32 -30 V 10" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         <path d="M 14 -30 Q 14 0 -15 0" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         
         <rect x="41" y="-85" width="22" height="55" fill="white" stroke="black"/>
-        <text x="52" y="-57" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 52,-57)">{res['nl']:,}</text>
+        <text x="52" y="-57.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" transform="rotate(-90 52,-57.5)">{res['nl']:,}</text>
         
         <rect x="21" y="-85" width="22" height="55" fill="white" stroke="black"/>
-        <text x="32" y="-57" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 32,-57)">{res['nt']:,}</text>
+        <text x="32" y="-57.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" transform="rotate(-90 32,-57.5)">{res['nt']:,}</text>
         
         <rect x="1" y="-85" width="22" height="55" fill="white" stroke="black"/>
-        <text x="12" y="-57" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 12,-57)">{res['nr']:,}</text>
+        <text x="12" y="-57.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" transform="rotate(-90 12,-57.5)">{res['nr']:,}</text>
     </g>
 
     <g transform="translate(355, 410)">
@@ -94,13 +110,13 @@ svg_code = f"""
         <path d="M 50 45 Q 50 15 75 15" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         
         <rect x="3" y="45" width="22" height="55" fill="white" stroke="black"/>
-        <text x="14" y="73" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 14,73)">{res['sl']:,}</text>
+        <text x="14" y="72.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" transform="rotate(-90 14,72.5)">{res['sl']:,}</text>
         
         <rect x="21" y="45" width="22" height="55" fill="white" stroke="black"/>
-        <text x="32" y="73" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 32,73)">{res['st']:,}</text>
+        <text x="32" y="72.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" transform="rotate(-90 32,72.5)">{res['st']:,}</text>
         
         <rect x="39" y="45" width="22" height="55" fill="white" stroke="black"/>
-        <text x="50" y="73" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" transform="rotate(-90 50,73)">{res['sr']:,}</text>
+        <text x="50" y="72.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold" transform="rotate(-90 50,72.5)">{res['sr']:,}</text>
     </g>
 
     <g transform="translate(265, 300)">
@@ -109,13 +125,13 @@ svg_code = f"""
         <path d="M -30 50 Q 5 50 5 75" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         
         <rect x="-85" y="1" width="55" height="22" fill="white" stroke="black"/>
-        <text x="-57" y="12" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['wl']:,}</text>
+        <text x="-57.5" y="12" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold">{res['wl']:,}</text>
         
         <rect x="-85" y="21" width="55" height="22" fill="white" stroke="black"/>
-        <text x="-57" y="32" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['wt']:,}</text>
+        <text x="-57.5" y="32" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold">{res['wt']:,}</text>
         
-        <rect x="-85" y="41" width="55" height="55" height="22" fill="white" stroke="black"/>
-        <text x="-57" y="52" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['wr']:,}</text>
+        <rect x="-85" y="41" width="55" height="22" fill="white" stroke="black"/>
+        <text x="-57.5" y="52" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold">{res['wr']:,}</text>
     </g>
 
     <g transform="translate(525, 385)">
@@ -124,13 +140,13 @@ svg_code = f"""
         <path d="M 60 14 Q 25 14 25 -10" fill="none" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
         
         <rect x="60" y="41" width="55" height="22" fill="white" stroke="black"/>
-        <text x="87" y="52" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['el']:,}</text>
+        <text x="87.5" y="52" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold">{res['el']:,}</text>
         
         <rect x="60" y="21" width="55" height="22" fill="white" stroke="black"/>
-        <text x="87" y="32" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['et']:,}</text>
+        <text x="87.5" y="32" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold">{res['et']:,}</text>
         
         <rect x="60" y="1" width="55" height="22" fill="white" stroke="black"/>
-        <text x="87" y="12" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold">{res['er']:,}</text>
+        <text x="87.5" y="12" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="bold">{res['er']:,}</text>
     </g>
 
     <text x="340" y="180" transform="rotate(-90 340,180)" font-size="13" fill="blue" font-weight="bold">{n_road}</text>
