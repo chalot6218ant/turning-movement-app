@@ -2,145 +2,148 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 
-st.set_page_config(page_title="Turning Movement Diagram", layout="wide")
+# ตั้งค่าหน้าจอแบบกว้าง
+st.set_page_config(page_title="Traffic Turning Movement", layout="wide")
 
-# --- Custom CSS เพื่อจัดหน้าตาให้เหมือนผังทางแยก ---
+# --- CSS สำหรับตกแต่ง Card และลูกศรให้ดูเป็นมืออาชีพ ---
 st.markdown("""
     <style>
-    .approach-box {
-        border: 2px solid #333;
-        padding: 10px;
+    .approach-card {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        background-color: #ffffff;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+    }
+    .approach-header {
+        background-color: #2e7d32; /* สีเขียวเข้ม */
+        color: white;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        display: inline-block;
+    }
+    .movement-item {
         text-align: center;
-        background-color: #f9f9f9;
-        border-radius: 5px;
+        padding: 10px;
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        background-color: #fafafa;
     }
-    .lane-value {
-        font-size: 20px;
-        font-weight: bold;
-        color: #1E88E5;
+    .arrow-label {
+        font-size: 14px;
+        color: #616161;
+        margin-bottom: 5px;
     }
-    .total-box {
-        background-color: #eee;
+    .pcu-value {
+        font-size: 26px;
         font-weight: bold;
+        color: #1565c0;
+    }
+    .pcu-unit {
+        font-size: 12px;
+        color: #9e9e9e;
+        font-weight: normal;
     }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🚗 Turning Movement Estimation (PCU/Hr)")
+st.title("🚦 Turning Movement Estimation (PCU/Hr)")
 
-# --- 1. Sidebar: Input Data ---
+# --- 1. Sidebar สำหรับกรอกข้อมูล ---
 with st.sidebar:
-    st.header("📍 ตั้งค่าทางแยก")
-    # กำหนดทิศทางมาตรฐาน 4 ทิศ (ติวานนท์ - งามวงศ์วาน)
+    st.header("📍 ข้อมูลทางแยก (Midblock)")
     legs = ["North (N)", "South (S)", "East (E)", "West (W)"]
-    
     inbound, outbound = [], []
     for leg in legs:
         st.subheader(f"ทิศ {leg}")
         c1, c2 = st.columns(2)
-        v_in = c1.number_input(f"ขาเข้า (In)", min_value=0, value=1000, key=f"in_{leg}")
-        v_out = c2.number_input(f"ขาออก (Out)", min_value=0, value=1000, key=f"out_{leg}")
+        v_in = c1.number_input(f"เข้า", min_value=0, value=1000, key=f"in_{leg}")
+        v_out = c2.number_input(f"ออก", min_value=0, value=1000, key=f"out_{leg}")
         inbound.append(v_in)
         outbound.append(v_out)
 
     st.header("⚙️ สมมติฐานสัดส่วน")
-    u_pct = st.slider("U-Turn (%)", 0, 20, 2)
-    s_pct = st.slider("ตรงไป (%)", 40, 90, 70)
+    u_pct = st.slider("สัดส่วน U-Turn (%)", 0, 20, 2)
+    s_pct = st.slider("สัดส่วน ตรงไป (%)", 40, 90, 70)
 
-# --- 2. Calculation Logic ---
-def calculate_matrix(in_f, out_f, labels, u_p, s_p):
-    n = len(in_f)
+# --- 2. การคำนวณ (Logic) ---
+def calculate_traffic(in_v, out_v, labels, u_p, s_p):
+    n = len(in_v)
     seed = np.ones((n, n)) * ((100 - s_p - u_p) / (n - 1 if n > 1 else 1))
     for i in range(n):
         for j in range(n):
             if i == j: seed[i,j] = u_p
             elif abs(i-j) == 2: seed[i,j] = s_p
     
-    in_f, out_f = np.array(in_f, dtype=float), np.array(out_f, dtype=float)
-    if in_f.sum() > 0:
-        out_f = out_f * (in_f.sum() / out_f.sum())
+    in_v, out_v = np.array(in_v, dtype=float), np.array(out_v, dtype=float)
+    if in_v.sum() > 0:
+        out_v = out_v * (in_v.sum() / out_v.sum())
 
     matrix = seed.copy()
-    for _ in range(100):
-        matrix = matrix * (in_f / np.where(matrix.sum(axis=1)==0, 1, matrix.sum(axis=1)))[:, np.newaxis]
-        matrix = matrix * (out_f / np.where(matrix.sum(axis=0)==0, 1, matrix.sum(axis=0)))
+    for _ in range(50):
+        matrix = matrix * (in_v / np.where(matrix.sum(axis=1)==0, 1, matrix.sum(axis=1)))[:, np.newaxis]
+        matrix = matrix * (out_v / np.where(matrix.sum(axis=0)==0, 1, matrix.sum(axis=0)))
     return pd.DataFrame(matrix, index=labels, columns=labels)
 
-# --- 3. Main Display: ผังทางแยก (Visual Diagram) ---
-if st.button("🚀 ประมวลผลและสร้างผังทางแยก"):
-    df = calculate_matrix(inbound, outbound, legs, u_pct, s_pct)
+# --- 3. การแสดงผล (Main UI) ---
+if st.button("🚀 ประมวลผลและสร้างผังลูกศร"):
+    df = calculate_traffic(inbound, outbound, legs, u_pct, s_pct)
     
-    # ดึงค่ามาเตรียมแสดงผล
-    N = df.loc["North (N)"]
-    S = df.loc["South (S)"]
-    E = df.loc["East (E)"]
-    W = df.loc["West (W)"]
+    st.subheader("✅ ผลการประมาณค่าปริมาณจราจรเลี้ยว (แยกตามรายขาเข้า)")
 
-    st.divider()
-    
-    # การจัด Layout แบบ Grid 3x3 เพื่อจำลองทางแยก
-    row1_left, row1_center, row1_right = st.columns([1, 1, 1])
-    row2_left, row2_center, row2_right = st.columns([1, 1, 1])
-    row3_left, row3_center, row3_right = st.columns([1, 1, 1])
-
-    # --- แถวบน: ทิศ North ---
-    with row1_center:
+    for i, origin in enumerate(legs):
+        # สร้าง Card สำหรับแต่ละ Approach
         st.markdown(f"""
-            <div class='approach-box'>
-                <b>North (ติวานนท์)</b><br>
-                <small>เข้าแยก 👇</small><br>
-                <span class='lane-value'>{N["South (S)"]:.0f} | {N["East (E)"]:.0f} | {N["West (W)"]:.0f}</span><br>
-                <div class='total-box'>Total In: {inbound[0]:.0f}</div>
-            </div>
+            <div class='approach-card'>
+                <div class='approach-header'>📍 ขาเข้าจากทิศ: {origin}</div>
         """, unsafe_allow_html=True)
+        
+        # เตรียมทิศทางลูกศร
+        cols = st.columns(len(legs) + 1)
+        
+        total_in_check = 0
+        for j, dest in enumerate(legs):
+            val = df.iloc[i, j]
+            total_in_check += val
+            
+            # กำหนดสัญลักษณ์ลูกศร
+            if i == j: 
+                label = "↪️ U-Turn"
+            elif abs(i-j) == 2: 
+                label = "⬆️ ตรงไป"
+            elif (i==0 and j==3) or (i==1 and j==2) or (i==2 and j==0) or (i==3 and j==1):
+                label = "⬅️ เลี้ยวซ้าย"
+            else:
+                label = "➡️ เลี้ยวขวา"
 
-    # --- แถวกลาง: West, ทางแยก, East ---
-    with row2_left:
-        st.markdown(f"""
-            <div class='approach-box'>
-                <b>West (ขาเข้า)</b><br>
-                <small>👉 เข้าแยก</small><br>
-                <span class='lane-value'>{W["East (E)"]:.0f}<br>{W["North (N)"]:.0f}<br>{W["South (S)"]:.0f}</span><br>
-                <div class='total-box'>Total In: {inbound[3]:.0f}</div>
-            </div>
-        """, unsafe_allow_html=True)
+            with cols[j]:
+                st.markdown(f"""
+                    <div class='movement-item'>
+                        <div class='arrow-label'>{label}</div>
+                        <div class='pcu-value'>{val:.0f}</div>
+                        <div class='pcu-unit'>PCU/Hr</div>
+                    </div>
+                """, unsafe_allow_html=True)
+        
+        # ช่องรวมท้าย Card
+        with cols[-1]:
+            st.markdown(f"""
+                <div class='movement-item' style='background-color: #eeeeee;'>
+                    <div class='arrow-label'>📊 รวมขาเข้า</div>
+                    <div class='pcu-value' style='color: #333;'>{total_in_check:.0f}</div>
+                    <div class='pcu-unit'>PCU/Hr</div>
+                </div>
+            """, unsafe_allow_html=True)
+            
+        st.markdown("</div>", unsafe_allow_html=True) # ปิด div approach-card
 
-    with row2_center:
-        st.write("")
-        st.image("https://cdn-icons-png.flaticon.com/512/484/484167.png", width=100) # รูปไอคอนสี่แยก
-        st.markdown("<center><b>INTERSECTION</b></center>", unsafe_allow_html=True)
-
-    with row2_right:
-        st.markdown(f"""
-            <div class='approach-box'>
-                <b>East (งามวงศ์วาน)</b><br>
-                <small>👈 เข้าแยก</small><br>
-                <span class='lane-value'>{E["West (W)"]:.0f}<br>{E["North (N)"]:.0f}<br>{E["South (S)"]:.0f}</span><br>
-                <div class='total-box'>Total In: {inbound[2]:.0f}</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    # --- แถวล่าง: ทิศ South ---
-    with row3_center:
-        st.markdown(f"""
-            <div class='approach-box'>
-                <div class='total-box'>Total In: {inbound[1]:.0f}</div>
-                <span class='lane-value'>{S["North (N)"]:.0f} | {S["East (E)"]:.0f} | {S["West (W)"]:.0f}</span><br>
-                <small>👆 เข้าแยก</small><br>
-                <b>South (ขาเข้า)</b>
-            </div>
-        """, unsafe_allow_html=True)
-
-    st.divider()
-    
-    # แสดงตาราง Matrix สรุปด้านล่าง
-    st.subheader("📝 Summary Matrix (PCU/Hr)")
-    matrix_final = df.copy()
-    matrix_final["Total Out"] = matrix_final.sum(axis=1)
-    st.dataframe(matrix_final.style.format("{:.0f}"))
-
-    csv = matrix_final.to_csv().encode('utf-8-sig')
-    st.download_button("📥 Download Data", csv, "turning_movement.csv")
+    # สรุปตาราง Matrix ไว้ใน Expander
+    with st.expander("📝 ดูตาราง Matrix สรุปผล"):
+        st.dataframe(df.style.format("{:.0f}"))
 
 else:
-    st.info("กรุณากรอกปริมาณจราจร In/Out ที่แถบด้านซ้าย แล้วกดปุ่มคำนวณ")
+    st.info("กรุณากรอกข้อมูลปริมาณจราจรที่แถบด้านซ้าย แล้วกดปุ่มคำนวณด้านบน")
