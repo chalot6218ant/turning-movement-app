@@ -1,118 +1,94 @@
 import streamlit as st
 
-st.set_page_config(layout="wide", page_title="Traffic Turning Movement Calculator")
+st.set_page_config(layout="wide", page_title="Traffic Turning Movement")
 
-# --- ส่วนการปรับแต่งที่ Sidebar ---
-st.sidebar.header("⚙️ Settings")
-title_text = st.sidebar.text_input("หัวข้อแผนภูมิ", "Year 2006 AM")
-unit_text = st.sidebar.text_input("หน่วย", "หน่วย : PCU/Hr.")
+# --- Sidebar Settings ---
+st.sidebar.header("⚙️ Configuration")
+title_text = st.sidebar.text_input("Header Title", "Year 2006 AM")
+rd_n = st.sidebar.text_input("North Road", "ติวานนท์")
+rd_s = st.sidebar.text_input("South Road", "ติวานนท์")
+rd_e = st.sidebar.text_input("East Road", "งามวงศ์วาน")
+rd_w = st.sidebar.text_input("West Road", "รัตนาธิเบศร์")
 
-st.sidebar.subheader("📍 ชื่อถนน")
-rd_n = st.sidebar.text_input("ถนนทิศเหนือ", "ติวานนท์")
-rd_s = st.sidebar.text_input("ถนนทิศใต้", "ติวานนท์")
-rd_e = st.sidebar.text_input("ถนนทิศตะวันออก", "งามวงศ์วาน")
-rd_w = st.sidebar.text_input("ถนนทิศตะวันตก", "รัตนาธิเบศร์")
+# --- Input Section ---
+st.subheader("📝 Input Traffic Volume (PCU/Hr.)")
+c1, c2, c3, c4 = st.columns(4)
+with c1:
+    n_l, n_t, n_r = st.number_input("N-Left", 25), st.number_input("N-Through", 1190), st.number_input("N-Right", 2362)
+with c2:
+    s_l, s_t, s_r = st.number_input("S-Left", 1693), st.number_input("S-Through", 481), st.number_input("S-Right", 60)
+with c3:
+    e_l, e_t, e_r = st.number_input("E-Left", 752), st.number_input("E-Through", 1762), st.number_input("E-Right", 1114)
+with c4:
+    w_l, w_t, w_r = st.number_input("W-Left", 516), st.number_input("W-Through", 3935), st.number_input("W-Right", 37)
 
-# --- ส่วนการกรอกข้อมูล ---
-st.subheader("📝 ป้อนข้อมูลปริมาณจราจร")
-col1, col2, col3, col4 = st.columns(4)
+# --- Calculation ---
+in_n, out_n = (n_l+n_t+n_r), (s_t+e_r+w_l)
+in_s, out_s = (s_l+s_t+s_r), (n_t+w_r+e_l)
+in_e, out_e = (e_l+e_t+e_r), (w_t+n_l+s_r)
+in_w, out_w = (w_l+w_t+w_r), (e_t+s_l+n_r)
 
-with col1:
-    st.markdown(f"**⬇️ จากทิศเหนือ ({rd_n})**")
-    n_l = st.number_input("ซ้าย (L)", value=25, key="nl")
-    n_t = st.number_input("ตรง (T)", value=1190, key="nt")
-    n_r = st.number_input("ขวา (R)", value=2362, key="nr")
-with col2:
-    st.markdown(f"**⬆️ จากทิศใต้ ({rd_s})**")
-    s_l = st.number_input("ซ้าย (L)", value=1693, key="sl")
-    s_t = st.number_input("ตรง (T)", value=481, key="st")
-    s_r = st.number_input("ขวา (R)", value=60, key="sr")
-with col3:
-    st.markdown(f"**⬅️ จากทิศตะวันออก ({rd_e})**")
-    e_l = st.number_input("ซ้าย (L)", value=752, key="el")
-    e_t = st.number_input("ตรง (T)", value=1762, key="et")
-    e_r = st.number_input("ขวา (R)", value=1114, key="er")
-with col4:
-    st.markdown(f"**➡️ จากทิศตะวันตก ({rd_w})**")
-    w_l = st.number_input("ซ้าย (L)", value=516, key="wl")
-    w_t = st.number_input("ตรง (T)", value=3935, key="wt")
-    w_r = st.number_input("ขวา (R)", value=37, key="wr")
+# --- SVG Rendering (เหมือนต้นฉบับเป๊ะ) ---
+svg_code = f"""
+<svg viewBox="0 0 800 700" xmlns="http://www.w3.org/2000/svg" style="background: white; border: 1px solid #ccc;">
+    <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#eee" stroke-width="1"/>
+        </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grid)" />
+    
+    <text x="400" y="40" text-anchor="middle" font-size="20" font-weight="bold">{title_text}</text>
 
-# --- Logic การคำนวณ ---
-in_n, in_s, in_e, in_w = (n_l+n_t+n_r), (s_l+s_t+s_r), (e_l+e_t+e_r), (w_l+w_t+w_r)
-out_n = s_t + e_r + w_l
-out_s = n_t + w_r + e_l
-out_e = w_t + n_l + s_r
-out_w = e_t + s_l + n_r
+    <line x1="320" y1="50" x2="320" y2="280" stroke="black" stroke-width="2" />
+    <line x1="480" y1="50" x2="480" y2="280" stroke="black" stroke-width="2" />
+    <line x1="320" y1="420" x2="320" y2="650" stroke="black" stroke-width="2" />
+    <line x1="480" y1="420" x2="480" y2="650" stroke="black" stroke-width="2" />
+    
+    <line x1="50" y1="280" x2="320" y2="280" stroke="black" stroke-width="2" />
+    <line x1="50" y1="420" x2="320" y2="420" stroke="black" stroke-width="2" />
+    <line x1="480" y1="280" x2="750" y2="280" stroke="black" stroke-width="2" />
+    <line x1="480" y1="420" x2="750" y2="420" stroke="black" stroke-width="2" />
 
-# --- แสดงผล Diagram ด้วย CSS ---
+    <text x="395" y="200" transform="rotate(-90 395,200)" font-size="14" font-weight="bold">{rd_n}</text>
+    <text x="600" y="340" font-size="14" font-weight="bold">{rd_e}</text>
+
+    <rect x="340" y="100" width="60" height="30" fill="white" stroke="black" /> <text x="370" y="120" text-anchor="middle">{out_n}</text>
+    <rect x="410" y="100" width="60" height="30" fill="white" stroke="black" /> <text x="440" y="120" text-anchor="middle">{in_n}</text>
+    
+    <rect x="340" y="570" width="60" height="30" fill="white" stroke="black" /> <text x="370" y="590" text-anchor="middle">{in_s}</text>
+    <rect x="410" y="570" width="60" height="30" fill="white" stroke="black" /> <text x="440" y="590" text-anchor="middle">{out_s}</text>
+
+    <rect x="650" y="290" width="60" height="30" fill="white" stroke="black" /> <text x="680" y="310" text-anchor="middle">{in_e}</text>
+    <rect x="650" y="380" width="60" height="30" fill="white" stroke="black" /> <text x="680" y="400" text-anchor="middle">{out_e}</text>
+
+    <rect x="100" y="290" width="60" height="30" fill="white" stroke="black" /> <text x="130" y="310" text-anchor="middle">{in_w}</text>
+    <rect x="100" y="380" width="60" height="30" fill="white" stroke="black" /> <text x="130" y="400" text-anchor="middle">{out_w}</text>
+
+    <rect x="370" y="240" width="30" height="25" fill="white" stroke="black" /> <text x="385" y="258" text-anchor="middle" font-size="12">{n_l}</text>
+    <rect x="405" y="240" width="40" height="25" fill="white" stroke="black" /> <text x="425" y="258" text-anchor="middle" font-size="12">{n_t}</text>
+    <rect x="450" y="240" width="30" height="25" fill="white" stroke="black" /> <text x="465" y="258" text-anchor="middle" font-size="12">{n_r}</text>
+    <text x="380" y="275" font-size="20">↧</text> <text x="420" y="275" font-size="20">↓</text> <text x="455" y="275" font-size="20">↴</text>
+
+    <rect x="320" y="430" width="30" height="25" fill="white" stroke="black" /> <text x="335" y="448" text-anchor="middle" font-size="12">{s_r}</text>
+    <rect x="355" y="430" width="40" height="25" fill="white" stroke="black" /> <text x="375" y="448" text-anchor="middle" font-size="12">{s_t}</text>
+    <rect x="400" y="430" width="30" height="25" fill="white" stroke="black" /> <text x="415" y="448" text-anchor="middle" font-size="12">{s_l}</text>
+    <text x="325" y="425" font-size="20">↰</text> <text x="365" y="425" font-size="20">↑</text> <text x="405" y="425" font-size="20">⤴</text>
+
+    <rect x="530" y="320" width="40" height="25" fill="white" stroke="black" /> <text x="550" y="338" text-anchor="middle" font-size="12">{e_l}</text>
+    <rect x="530" y="347" width="40" height="25" fill="white" stroke="black" /> <text x="550" y="365" text-anchor="middle" font-size="12">{e_t}</text>
+    <rect x="530" y="374" width="40" height="25" fill="white" stroke="black" /> <text x="550" y="392" text-anchor="middle" font-size="12">{e_r}</text>
+    <text x="500" y="335" font-size="20">↤</text> <text x="500" y="365" font-size="20">←</text> <text x="500" y="395" font-size="20">↲</text>
+
+    <rect x="230" y="285" width="40" height="25" fill="white" stroke="black" /> <text x="250" y="303" text-anchor="middle" font-size="12">{w_r}</text>
+    <rect x="230" y="312" width="40" height="25" fill="white" stroke="black" /> <text x="250" y="330" text-anchor="middle" font-size="12">{w_t}</text>
+    <rect x="230" y="339" width="40" height="25" fill="white" stroke="black" /> <text x="250" y="357" text-anchor="middle" font-size="12">{w_l}</text>
+    <text x="285" y="300" font-size="20">↱</text> <text x="285" y="330" font-size="20">→</text> <text x="285" y="360" font-size="20">↳</text>
+
+    <text x="730" y="80" font-size="30">🧭</text> <text x="735" y="105" font-weight="bold">N</text>
+    <text x="60" y="620" font-size="12">หน่วย : PCU/Hr.</text>
+</svg>
+"""
+
 st.divider()
-
-html_code = f"""
-<style>
-    .canvas {{
-        width: 850px;
-        height: 700px;
-        background-color: white;
-        border: 1px solid #999;
-        margin: 0 auto;
-        position: relative;
-        background-image: linear-gradient(#eee 1px, transparent 1px), linear-gradient(90deg, #eee 1px, transparent 1px);
-        background-size: 20px 20px;
-        font-family: sans-serif;
-    }}
-    .title {{ text-align: center; width: 100%; padding-top: 20px; font-size: 18px; }}
-    .val-box {{
-        position: absolute; border: 1px solid black; background: white;
-        text-align: center; font-size: 13px; min-width: 45px; height: 22px; line-height: 22px;
-    }}
-    .road-line-v {{ position: absolute; width: 2px; background: black; }}
-    .road-line-h {{ position: absolute; height: 2px; background: black; }}
-    .arrow-icon {{ position: absolute; font-size: 22px; font-weight: bold; }}
-    .road-label {{ position: absolute; font-size: 12px; font-weight: bold; }}
-</style>
-
-<div class="canvas">
-    <div class="title">{title_text}</div>
-
-    <div class="road-line-v" style="left: 340px; top: 100px; height: 160px;"></div>
-    <div class="road-line-v" style="left: 500px; top: 100px; height: 160px;"></div>
-    <div class="road-label" style="left: 410px; top: 220px; transform: rotate(-90deg);">{rd_n}</div>
-    <div class="val-box" style="left: 350px; top: 140px;">{out_n:,}</div>
-    <div class="val-box" style="left: 440px; top: 140px;">{in_n:,}</div>
-    <div class="val-box" style="left: 410px; top: 237px; min-width: 25px;">{n_l}</div>
-    <div class="val-box" style="left: 437px; top: 237px; min-width: 35px;">{n_t}</div>
-    <div class="val-box" style="left: 474px; top: 237px; min-width: 25px;">{n_r}</div>
-    <div class="arrow-icon" style="left: 405px; top: 255px;">↧</div>
-    <div class="arrow-icon" style="left: 443px; top: 255px;">↓</div>
-    <div class="arrow-icon" style="left: 475px; top: 255px;">↴</div>
-
-    <div class="road-line-v" style="left: 340px; top: 410px; height: 160px;"></div>
-    <div class="road-line-v" style="left: 500px; top: 410px; height: 160px;"></div>
-    <div class="val-box" style="left: 440px; top: 520px;">{out_s:,}</div>
-    <div class="val-box" style="left: 350px; top: 520px;">{in_s:,}</div>
-    <div class="val-box" style="left: 340px; top: 410px; min-width: 25px;">{s_r}</div>
-    <div class="val-box" style="left: 367px; top: 410px; min-width: 35px;">{s_t}</div>
-    <div class="val-box" style="left: 404px; top: 410px; min-width: 25px;">{s_l}</div>
-    <div class="arrow-icon" style="left: 335px; top: 380px;">↰</div>
-    <div class="arrow-icon" style="left: 373px; top: 380px;">↑</div>
-    <div class="arrow-icon" style="left: 405px; top: 380px;">⤴</div>
-
-    <div class="road-line-h" style="left: 500px; top: 260px; width: 250px;"></div>
-    <div class="road-line-h" style="left: 500px; top: 410px; width: 250px;"></div>
-    <div class="road-label" style="left: 600px; top: 340px;">{rd_e}</div>
-    <div class="val-box" style="left: 670px; top: 310px;">{in_e:,}</div>
-    <div class="val-box" style="left: 670px; top: 365px;">{out_e:,}</div>
-    <div class="val-box" style="left: 550px; top: 337px; min-width: 40px;">{e_l}</div>
-    <div class="val-box" style="left: 550px; top: 361px; min-width: 40px;">{e_t}</div>
-    <div class="val-box" style="left: 550px; top: 385px; min-width: 40px;">{e_r}</div>
-    <div class="arrow-icon" style="left: 515px; top: 332px;">↤</div>
-    <div class="arrow-icon" style="left: 515px; top: 357px;">←</div>
-    <div class="arrow-icon" style="left: 515px; top: 382px;">↲</div>
-
-    <div class="road-line-h" style="left: 90px; top: 260px; width: 250px;"></div>
-    <div class="road-line-h" style="left: 90px; top: 410px; width: 250px;"></div>
-    <div class="val-box" style="left: 140px; top: 310px;">{in_w:,}</div>
-    <div class="val-box" style="left: 140px; top: 365px;">{out_w:,}</div>
-    <div class="val-box" style="left: 250px; top: 260px; min-width: 40px;">{w_r}</div>
-    <div class="val-box" style="left: 250px; top: 2
+st.components.v1.html(svg_code, height=720)
